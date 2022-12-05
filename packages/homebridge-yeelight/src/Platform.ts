@@ -1,5 +1,5 @@
 import { Device, Discovery } from '@homeiot/yeelight'
-import { PLATFORM, PLUGIN_NAME } from './constants'
+import { Platform as BasePlatform } from '@homeiot/homebridge-shared'
 import { Accessory } from './Accessory'
 import type {
   API,
@@ -9,22 +9,27 @@ import type {
   PlatformConfig,
 } from 'homebridge'
 
-export class Platform implements DynamicPlatformPlugin {
-  public readonly accessories = new Map<string, Accessory>()
+export class Platform extends BasePlatform<Accessory> implements DynamicPlatformPlugin {
+  static readonly pluginIdentifier = '@homeiot/homebridge-yeelight'
+  static readonly platformName = 'yeelight'
 
   constructor(
-    public readonly log: Logging,
-    public readonly config: PlatformConfig,
-    public readonly api: API,
+    log: Logging,
+    config: PlatformConfig,
+    api: API,
   ) {
-    this.log.debug('Finished initializing')
-    const discovery = new Discovery()
-    this.api.on('didFinishLaunching', async () => {
+    super(log, config, api)
+    this.api.on('didFinishLaunching', () => {
       this.log.debug('Executed didFinishLaunching callback')
-      discovery.on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
-      await discovery.start()
-      this.log.debug('Discovery Started')
+      new Discovery()
+        .on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
+        .start()
+        .then(() => this.log.debug('Discovery Started'))
     })
+  }
+
+  public static register(api: API) {
+    api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
   }
 
   /**
@@ -55,7 +60,7 @@ export class Platform implements DynamicPlatformPlugin {
       const accessory = new this.api.platformAccessory(name, uuid)
       accessory.context = { ...info }
       this.accessories.set(id, new Accessory(this, accessory, device))
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM, [accessory])
+      this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
     }
   }
 }

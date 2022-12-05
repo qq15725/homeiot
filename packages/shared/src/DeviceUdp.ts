@@ -2,7 +2,7 @@ import { createSocket } from 'node:dgram'
 import { EventEmitter } from 'node:events'
 import type { Socket, SocketOptions } from 'node:dgram'
 
-export class DeviceUdp extends EventEmitter {
+export abstract class DeviceUdp extends EventEmitter {
   public readonly socket: Socket
 
   constructor(

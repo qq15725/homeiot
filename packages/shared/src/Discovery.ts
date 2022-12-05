@@ -7,7 +7,7 @@ import type { Socket, SocketOptions } from 'node:dgram'
 //   error: (error: Error) => void
 // }
 
-export class Discovery extends EventEmitter {
+export abstract class Discovery extends EventEmitter {
   public readonly socket: Socket
 
   constructor(

@@ -56,7 +56,7 @@ export class Device extends DeviceTcp {
       .map(payload => JSON.parse(payload))
     for (const item of items) {
       if (isPropsMessage(item)) {
-        this.emit('updateProps', item.params)
+        this.emit('props', item.params)
       } else if (isResultMessage(item)) {
         this.pullCommand(item.id)?.resolve(item.result)
       } else if (isErrorMessage(item)) {

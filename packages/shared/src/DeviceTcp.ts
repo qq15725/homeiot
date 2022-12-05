@@ -10,7 +10,7 @@ import type { SocketConstructorOpts } from 'node:net'
 //   disconnected: (hadError: boolean) => void
 // }
 
-export class DeviceTcp extends EventEmitter {
+export abstract class DeviceTcp extends EventEmitter {
   public readonly socket: Socket
 
   protected status: 'disconnected' | 'connecting' | 'connected' = 'disconnected'

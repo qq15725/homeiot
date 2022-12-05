@@ -1,8 +1,9 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/homebridge-yeelight" },
     { "path": "packages/shared" },
     { "path": "packages/yeelight" },
+    { "path": "packages/homebridge-shared" },
+    { "path": "packages/homebridge-yeelight" },
   ]
 }
