@@ -5,7 +5,7 @@
     "outDir": "dist"
   },
   "references": [
-    { "path": "../homebridge-shared" },
+    { "path": "../shared-homebridge" },
     { "path": "../yeelight" }
   ]
 }

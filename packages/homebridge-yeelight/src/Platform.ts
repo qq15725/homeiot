@@ -1,5 +1,5 @@
 import { Device, Discovery } from '@homeiot/yeelight'
-import { Platform as BasePlatform } from '@homeiot/homebridge-shared'
+import { Platform as BasePlatform } from '@homeiot/shared-homebridge'
 import { Accessory } from './Accessory'
 import type {
   API,

@@ -1,0 +1,17 @@
+{
+  "pluginAlias": "homeiot-yeelight",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "You must enable LAN control for the lights.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Yeelight",
+        "required": true
+      }
+    }
+  }
+}
