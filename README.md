@@ -39,13 +39,13 @@ Configure `config.json` file `platforms` field
 }
 ```
 
-Run homebridge
+Run
 
 ```shell
 homebridge
 ```
 
-### Web
+### Web Server
 
 TODO
 
