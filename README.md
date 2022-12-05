@@ -12,3 +12,43 @@
   </a>
 </p>
 
+## Installation
+
+```shell
+pnpm add -g homeiot
+```
+
+## Usage
+
+### HomeBridge
+
+```shell
+pnpm add -g homebridge
+```
+
+Configure `config.json` file `platforms` field
+
+```json
+{
+  "platforms": [
+    {
+      "platform": "yeelight",
+      "name": "Yeelight"
+    }
+  ]
+}
+```
+
+Run homebridge
+
+```shell
+homebridge
+```
+
+### Web
+
+TODO
+
+### CLI
+
+TODO
