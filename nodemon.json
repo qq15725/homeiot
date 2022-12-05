@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "packages/shared/dist",
+    "packages/homebridge-yeelight/dist",
+    "packages/yeelight/dist"
+  ],
+  "ext": "ts",
+  "ignore": [],
+  "exec": "DEBUG=* homebridge -D -P ./packages -U ./homebridge",
+  "signal": "SIGTERM",
+  "env": {
+    "NODE_OPTIONS": "--trace-warnings"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@homeiot/yeelight",
+  "version": "0.0.0",
+  "packageManager": "pnpm@7.9.0",
+  "description": "",
+  "author": "wxm",
+  "license": "MIT",
+  "homepage": "https://github.com/qq15725/homeiot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qq15725/homeiot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/qq15725/homeiot/issues"
+  },
+  "engines": {
+    "node": ">=14.18.1"
+  },
+  "keywords": [],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf ./dist && tsc --build"
+  },
+  "dependencies": {
+    "@homeiot/shared": "workspace:*"
+  }
+}
