@@ -17,5 +17,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf ./dist && tsc --build"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

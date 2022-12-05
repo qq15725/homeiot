@@ -27,5 +27,8 @@
   },
   "dependencies": {
     "@homeiot/yeelight": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
