@@ -20,7 +20,7 @@ pnpm add -g homeiot
 
 ## Usage
 
-### HomeBridge
+### By HomeBridge agency to HomeKit
 
 ```shell
 pnpm add -g homebridge
@@ -44,6 +44,10 @@ Run
 ```shell
 homebridge
 ```
+
+### By Matter Protocol agency to HomeKit
+
+TODO
 
 ### Web Server
 
