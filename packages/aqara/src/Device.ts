@@ -16,7 +16,6 @@ export class Device extends BaseDevice {
   public readonly shortId: number
   public token = 'token'
   public password = 'password'
-  protected messages = new Map<string, any>()
 
   constructor(info: DeviceInfo) {
     super(info.ip, info.port, { type: 'udp4' })
@@ -30,7 +29,7 @@ export class Device extends BaseDevice {
       .update(this.token, 'ascii', 'hex')
   }
 
-  protected getMessageId(cmd: string) {
+  protected uuid(cmd: string) {
     if (cmd.endsWith('_ack')) cmd = cmd.substring(-1, 4)
     return `${ cmd }${ this.sid }`
   }
@@ -44,13 +43,7 @@ export class Device extends BaseDevice {
       return
     }
     const { cmd, data } = message
-    const id = this.getMessageId(cmd)
-    const promise = this.messages.get(id)
-    if (promise) {
-      this.messages.delete(id)
-      clearTimeout(promise.timeout)
-      promise.resolve(data)
-    }
+    this.pullPromise(this.uuid(cmd))?.resolve(data)
   }
 
   public invoke(cmd: string, params?: Record<string, any>): Promise<any> {
@@ -62,16 +55,14 @@ export class Device extends BaseDevice {
         short_id: this.shortId,
       }
       if (params) payload.data = JSON.stringify(params)
-      this.send(JSON.stringify(payload)).catch(reject)
-      const id = this.getMessageId(cmd)
-      this.messages.set(this.getMessageId(cmd), {
-        timeout: setTimeout(() => {
-          reject(new Error(`${ this.sid }: failed to send cmd ${ id }.`))
-          this.messages.delete(id)
-        }, 100),
-        resolve,
-        reject,
-      })
+      const id = this.uuid(cmd)
+      this
+        .setPromose(id, resolve, reject)
+        .send(JSON.stringify(payload))
+        .catch(e => {
+          reject(e)
+          this.pullPromise(id)
+        })
     })
   }
 

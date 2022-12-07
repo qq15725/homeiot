@@ -1,6 +1,6 @@
 import { Device as BaseDevice } from '@homeiot/shared'
 import { EOL } from './constants'
-import { getNextId, isErrorMessage, isPropsMessage, isResultMessage, toSnakeCase } from './utils'
+import { isErrorMessage, isPropsMessage, isResultMessage, toSnakeCase } from './utils'
 import { getSpec } from './specs'
 import type {
   DeviceModelSpec,
@@ -10,7 +10,7 @@ import type {
 } from './types'
 
 export class Device extends BaseDevice {
-  protected readonly commands = new Map<number, { timeout: any; resolve: any; reject: any }>()
+  protected static uuid = 0
   public readonly spec: DeviceModelSpec
 
   constructor(
@@ -22,31 +22,16 @@ export class Device extends BaseDevice {
     this.spec = getSpec(info)
   }
 
-  protected pullCommand(id: number) {
-    const promise = this.commands.get(id)
-    if (promise) {
-      this.commands.delete(id)
-      clearTimeout(promise.timeout)
-    }
-    return promise
-  }
-
   public invoke(method: string, params: any[] = []): Promise<any> {
-    const command = { id: getNextId(), method, params }
     return new Promise((resolve, reject) => {
-      this.commands.set(command.id, {
-        timeout: setTimeout(() => {
-          reject(new Error(`${ this.info.id }: failed to send cmd ${ command.id }.`))
-          this.commands.delete(command.id)
-        }, 100),
-        resolve,
-        reject,
-      })
-      this.emit('command', command)
-      this.send(JSON.stringify(command) + EOL).catch(e => {
-        reject(e)
-        this.commands.delete(command.id)
-      })
+      const id = ++Device.uuid
+      this
+        .setPromose(id, resolve, reject)
+        .send(JSON.stringify({ id, method, params }) + EOL)
+        .catch(e => {
+          reject(e)
+          this.pullPromise(id)
+        })
     })
   }
 
@@ -57,11 +42,11 @@ export class Device extends BaseDevice {
       .map(payload => JSON.parse(payload))
     for (const item of items) {
       if (isPropsMessage(item)) {
-        this.emit('props', item.params)
+        this.emit('updated', item.params)
       } else if (isResultMessage(item)) {
-        this.pullCommand(item.id)?.resolve(item.result)
+        this.pullPromise(item.id)?.resolve(item.result)
       } else if (isErrorMessage(item)) {
-        this.pullCommand(item.id)?.reject(item.error.message)
+        this.pullPromise(item.id)?.reject(item.error.message)
       }
     }
   }

@@ -13,11 +13,6 @@ export function toCameCase(str: string): string {
   return str.replace(/[-_](\w)/g, (match: string, part: string) => part.toLocaleUpperCase())
 }
 
-let id = 0
-export function getNextId() {
-  return id++
-}
-
 export function isPropsMessage(message: Record<string, any>): message is { method: 'props'; params: Record<string, any> } {
   return 'method' in message
     && 'params' in message

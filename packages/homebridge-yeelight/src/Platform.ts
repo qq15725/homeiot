@@ -49,7 +49,6 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     this.accessories.set(id, new Accessory(this, accessory, new Device(context as any)))
   }
 
-  // called when a Yeelight has responded to the discovery query
   private onDiscovered = (device: Device) => {
     const { info, spec } = device
     const { id } = info
@@ -63,6 +62,8 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
       accessory.context = { ...info }
       this.accessories.set(id, new Accessory(this, accessory, device))
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
+    } else {
+      this.accessories.get(id)!.updateProps(info)
     }
   }
 }

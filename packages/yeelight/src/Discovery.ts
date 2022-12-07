@@ -40,7 +40,7 @@ export class Discovery extends BaseDiscovery {
           if (array.length === 1) return props
           const keyRaw = array[0]
           const key = toCameCase(keyRaw.toLowerCase())
-          const value = array.slice(1).join('').trim()
+          const value = array.slice(1).join(':').trim()
           switch (keyRaw) {
             case 'Cache-Control':
             case 'Date':

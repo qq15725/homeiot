@@ -5,6 +5,7 @@ import type { SocketConstructorOpts } from 'node:net'
 import type { Socket as UdpSocket } from 'node:dgram'
 
 export abstract class Device extends EventEmitter {
+  protected readonly promises = new Map<string | number, { timeout: any; resolve: any; reject: any }>()
   private socket?: TcpSocket | UdpSocket
 
   constructor(
@@ -25,6 +26,27 @@ export abstract class Device extends EventEmitter {
 
   private isUdpSocket(socket: any): socket is UdpSocket {
     return !this.isTcpSocket(this.socket) && Boolean(this.socket)
+  }
+
+  protected setPromose(id: string | number, resolve: any, reject: any) {
+    this.promises.set(id, {
+      timeout: setTimeout(() => {
+        reject(new Error(`failed to send message ${ id }.`))
+        this.promises.delete(id)
+      }, 500),
+      resolve,
+      reject,
+    })
+    return this
+  }
+
+  protected pullPromise(id: string | number) {
+    const promise = this.promises.get(id)
+    if (promise) {
+      this.promises.delete(id)
+      clearTimeout(promise.timeout)
+    }
+    return promise
   }
 
   public connect(): Promise<this> {
@@ -64,7 +86,9 @@ export abstract class Device extends EventEmitter {
               .off('error', onConnectError)
               .setEncoding(this.options?.encoding ?? 'utf8')
               .setTimeout(this.options?.timeout ?? 3000)
+              .on('error', e => this.emit('error', e))
               .on('data', this.onMessage.bind(this))
+            this.emit('connected')
             resolve(this)
           }) as any
       } else {
@@ -92,8 +116,10 @@ export abstract class Device extends EventEmitter {
         const socket = this.socket
         if (this.isTcpSocket(socket)) {
           socket.write(str, onError)
+          this.emit('sended', str)
         } else if (this.isUdpSocket(socket)) {
           socket.send(str, this.port, this.host, onError)
+          this.emit('sended', str)
         } else {
           reject(new Error('Socket is closed'))
         }

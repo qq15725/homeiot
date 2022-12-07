@@ -22,38 +22,12 @@ export class Accessory extends BaseAccessory {
     Accessory.nameCount.set(name, count)
     if (count > 1) name = `${ name } ${ count }`
 
-    const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
-
-    const updateProps = (props: Record<string, any>) => {
-      for (const [key, value] of Object.entries(props)) {
-        this.attributes[key] = value
-        switch (key) {
-          case 'power':
-            lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')
-            break
-          case 'hue':
-            lightBulb.updateCharacteristic(this.characteristicClass.Hue, value)
-            break
-          case 'sat':
-            lightBulb.updateCharacteristic(this.characteristicClass.Saturation, value)
-            break
-          case 'bright':
-            lightBulb.updateCharacteristic(this.characteristicClass.Brightness, value)
-            break
-          case 'ct':
-            lightBulb.updateCharacteristic(this.characteristicClass.ColorTemperature, convertColorTemperature(value))
-            break
-        }
-      }
-    }
-
-    updateProps(device.info)
-
     device
-      .on('command', (cmd: string) => platform.log.debug(cmd))
-      .on('props', updateProps)
-      // .socket
-      // .on('connect', () => platform.log.debug(`Connect to ${ device.host }:${ device.port }`))
+      .on('connected', () => platform.log.debug(`Connect to ${ device.host }:${ device.port }`))
+      .on('sended', (str: string) => platform.log.debug(str))
+      .on('updated', props => this.updateProps(props))
+
+    this.updateProps(info)
 
     this
       .setInfo({
@@ -87,6 +61,7 @@ export class Accessory extends BaseAccessory {
         }
       })
 
+    const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
     // const lightBulb = accessory.getService(Service.Lightbulb)
     //   ?? accessory.addService(new Service.Lightbulb(name))
 
@@ -132,6 +107,31 @@ export class Accessory extends BaseAccessory {
         maxValue: convertColorTemperature(device.spec.colorTemperature.min),
         minValue: convertColorTemperature(device.spec.colorTemperature.max),
       })
+    }
+  }
+
+  public updateProps(props: Record<string, any>) {
+    const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
+
+    for (const [key, value] of Object.entries(props)) {
+      this.attributes[key] = value
+      switch (key) {
+        case 'power':
+          lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')
+          break
+        case 'hue':
+          lightBulb.updateCharacteristic(this.characteristicClass.Hue, value)
+          break
+        case 'sat':
+          lightBulb.updateCharacteristic(this.characteristicClass.Saturation, value)
+          break
+        case 'bright':
+          lightBulb.updateCharacteristic(this.characteristicClass.Brightness, value)
+          break
+        case 'ct':
+          lightBulb.updateCharacteristic(this.characteristicClass.ColorTemperature, convertColorTemperature(value))
+          break
+      }
     }
   }
 }
