@@ -138,9 +138,8 @@ export type DeviceMethodName = 'get_prop'
 export type Effect = 'sudden' | 'smooth'
 
 export interface DiscoveredDeviceInfo {
-  cacheControl: string
-  date: string
-  ext: string
+  [key: string]: any
+  from: 'response' | 'notify' | string
   // field contains the service access point of the smart LED deivce.
   // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
   location: string

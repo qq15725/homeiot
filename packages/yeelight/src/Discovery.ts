@@ -19,35 +19,59 @@ export class Discovery extends BaseDiscovery {
     )
   }
 
-  protected onMessage(data: Buffer) {
-    const message = data.toString()
+  protected onMessage(buffer: Buffer) {
+    const [firstLine, ...lines] = buffer.toString().split(EOL)
+    if (
+      !firstLine.includes('HTTP/1.1')
+      || firstLine === 'M-SEARCH * HTTP/1.1'
+    ) return
 
-    if (message.startsWith('M-SEARCH')) return
+    const from = firstLine === 'NOTIFY * HTTP/1.1'
+      ? 'notify'
+      : firstLine === 'HTTP/1.1 200 OK'
+        ? 'response'
+        : firstLine
 
-    const info = message.split(EOL).reduce((props, line) => {
-      if (!line.includes(': ')) return props
-      const [header, headerValue] = line.split(': ')
-      const key = toCameCase(header.toLowerCase())
-      const value = headerValue.trim()
-      switch (key) {
-        case 'bright':
-        case 'colorMode':
-        case 'ct':
-        case 'hue':
-        case 'sat':
-        case 'rgb':
-          props[key] = Number(value)
-          break
-        case 'support':
-          props[key] = value.split(' ') as any
-          break
-        default:
-          props[key] = value
-          break
-      }
-      return props
-    }, {} as Record<string, any>)
+    const info = lines
+      .reduce(
+        (props, line) => {
+          const array = line.split(':')
+          if (array.length === 1) return props
+          const keyRaw = array[0]
+          const key = toCameCase(keyRaw.toLowerCase())
+          const value = array.slice(1).join('').trim()
+          switch (keyRaw) {
+            case 'Cache-Control':
+            case 'Date':
+            case 'Ext':
+            case 'Host':
+            case 'Server':
+            case 'NTS': // ssdp:alive
+              break
+            case 'bright':
+            case 'ct':
+            case 'hue':
+            case 'sat':
+            case 'rgb':
+              props[key] = Number(value)
+              break
+            case 'color_mode':
+              props[key] = Number(value) as 1 | 2 | 3
+              break
+            case 'support':
+              props[key] = value.split(' ')
+              break
+            default:
+              props[key] = value
+              break
+          }
+          return props
+        },
+        { from } as DiscoveredDeviceInfo,
+      )
 
-    this.emit('discovered', new Device(info as DiscoveredDeviceInfo))
+    if (!info.location.startsWith('yeelight://')) return
+
+    this.emit('discovered', new Device(info))
   }
 }
