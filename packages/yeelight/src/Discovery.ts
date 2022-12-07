@@ -21,6 +21,7 @@ export class Discovery extends BaseDiscovery {
 
   protected onMessage(buffer: Buffer) {
     const [firstLine, ...lines] = buffer.toString().split(EOL)
+
     if (
       !firstLine.includes('HTTP/1.1')
       || firstLine === 'M-SEARCH * HTTP/1.1'

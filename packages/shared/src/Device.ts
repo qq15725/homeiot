@@ -29,9 +29,9 @@ export abstract class Device extends EventEmitter {
 
   public connect(): Promise<this> {
     return new Promise((resolve, reject) => {
+      const socketRaw = this.socket
       const type = this.options?.type ?? 'tcp'
       if (type === 'tcp') {
-        const socketRaw = this.socket
         if (this.isTcpSocket(socketRaw)) {
           if (socketRaw.connecting) {
             return (async () => {
@@ -68,7 +68,13 @@ export abstract class Device extends EventEmitter {
             resolve(this)
           }) as any
       } else {
-        this.socket = createUdpSocket(type)
+        if (this.isUdpSocket(socketRaw)) {
+          return resolve(this)
+        }
+        this.socket = createUdpSocket({
+          type,
+          reuseAddr: true,
+        })
           .bind(this.port)
           .once('close', () => this.socket = undefined)
           .on('error', () => {})
@@ -79,17 +85,19 @@ export abstract class Device extends EventEmitter {
     })
   }
 
-  public async send(str: string): Promise<void> {
+  public send(str: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const socket = this.socket
-      const onError = (e?: Error | null) => e ? reject(e) : resolve()
-      if (this.isTcpSocket(socket)) {
-        this.connect().then(() => socket.write(str, onError))
-      } else if (this.isUdpSocket(socket)) {
-        socket.send(str, this.port, this.host, onError)
-      } else {
-        reject(new Error('Socket is closed'))
-      }
+      this.connect().catch(reject).then(() => {
+        const onError = (e?: Error | null) => e ? reject(e) : resolve()
+        const socket = this.socket
+        if (this.isTcpSocket(socket)) {
+          socket.write(str, onError)
+        } else if (this.isUdpSocket(socket)) {
+          socket.send(str, this.port, this.host, onError)
+        } else {
+          reject(new Error('Socket is closed'))
+        }
+      })
     })
   }
 

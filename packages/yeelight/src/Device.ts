@@ -3,7 +3,6 @@ import { EOL } from './constants'
 import { getNextId, isErrorMessage, isPropsMessage, isResultMessage, toSnakeCase } from './utils'
 import { getSpec } from './specs'
 import type {
-  DeviceMethodName,
   DeviceModelSpec,
   DevicePropName,
   DiscoveredDeviceInfo,
@@ -32,7 +31,7 @@ export class Device extends BaseDevice {
     return promise
   }
 
-  public invoke(method: DeviceMethodName, params: any[] = []): Promise<any> {
+  public invoke(method: string, params: any[] = []): Promise<any> {
     const command = { id: getNextId(), method, params }
     return new Promise((resolve, reject) => {
       this.commands.set(command.id, {
@@ -67,9 +66,9 @@ export class Device extends BaseDevice {
     }
   }
 
-  async getProp(key: DevicePropName): Promise<string>
-  async getProp(key: DevicePropName[]): Promise<Record<string, any>>
-  async getProp(key: any): Promise<any> {
+  public async getProp(key: DevicePropName): Promise<string>
+  public async getProp(key: DevicePropName[]): Promise<Record<string, any>>
+  public async getProp(key: any): Promise<any> {
     const isArray = Array.isArray(key)
     const keys = isArray ? key : [key]
     const values = await this.invoke('get_prop', keys.map(v => toSnakeCase(v)))
@@ -81,31 +80,31 @@ export class Device extends BaseDevice {
     return props
   }
 
-  setCtAbx(ct: number, effect: Effect = 'smooth', duration = 400) {
+  public setCtAbx(ct: number, effect: Effect = 'smooth', duration = 400): Promise<void> {
     return this.invoke('set_ct_abx', [ct, effect, duration])
   }
 
-  setRgb(rgb: number, effect: Effect = 'smooth', duration = 400) {
+  public setRgb(rgb: number, effect: Effect = 'smooth', duration = 400): Promise<void> {
     return this.invoke('set_rgb', [rgb, effect, duration])
   }
 
-  setHsv(hue: number, sat: number, effect: Effect = 'smooth', duration = 400) {
+  public setHsv(hue: number, sat: number, effect: Effect = 'smooth', duration = 400): Promise<void> {
     return this.invoke('set_hsv', [hue, sat, effect, duration])
   }
 
-  setBright(brightness: number, effect: Effect = 'smooth', duration = 400) {
+  public setBright(brightness: number, effect: Effect = 'smooth', duration = 400): Promise<void> {
     return this.invoke('set_bright', [brightness, effect, duration])
   }
 
-  setPower(power: 'on' | 'off', effect: Effect = 'smooth', duration = 400, mode: 0 | 1 | 2 | 3 | 4 | 5 = 0) {
+  public setPower(power: 'on' | 'off', effect: Effect = 'smooth', duration = 400, mode: 0 | 1 | 2 | 3 | 4 | 5 = 0): Promise<void> {
     return this.invoke('set_power', [power, effect, duration, mode])
   }
 
-  toggle() {
+  public toggle(): Promise<void> {
     return this.invoke('toggle')
   }
 
-  setDefault() {
+  public setDefault(): Promise<void> {
     return this.invoke('set_default')
   }
 }
