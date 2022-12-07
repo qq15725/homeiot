@@ -1,4 +1,4 @@
-import { DeviceTcp } from '@homeiot/shared'
+import { Device as BaseDevice } from '@homeiot/shared'
 import { EOL } from './constants'
 import { getNextId, isErrorMessage, isPropsMessage, isResultMessage, toSnakeCase } from './utils'
 import { getSpec } from './specs'
@@ -10,7 +10,7 @@ import type {
   Effect,
 } from './types'
 
-export class Device extends DeviceTcp {
+export class Device extends BaseDevice {
   protected readonly commands = new Map<number, { timeout: any; resolve: any; reject: any }>()
   public readonly spec: DeviceModelSpec
 
@@ -19,9 +19,8 @@ export class Device extends DeviceTcp {
   ) {
     const endpoint = info.location.split('//')[1]
     const [host, port] = endpoint.split(':')
-    super(host, Number(port))
+    super(host, Number(port), { type: 'tcp' })
     this.spec = getSpec(info)
-    this.on('message', this.onMessage.bind(this))
   }
 
   protected pullCommand(id: number) {
@@ -45,7 +44,10 @@ export class Device extends DeviceTcp {
         reject,
       })
       this.emit('command', command)
-      this.send(JSON.stringify(command) + EOL)
+      this.send(JSON.stringify(command) + EOL).catch(e => {
+        reject(e)
+        this.commands.delete(command.id)
+      })
     })
   }
 

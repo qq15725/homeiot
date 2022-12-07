@@ -24,31 +24,36 @@ export class Accessory extends BaseAccessory {
 
     const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
 
-    device
-      .on('command', (cmd: string) => platform.log(cmd))
-      .on('props', (props: Record<string, any>) => {
-        for (const [key, value] of Object.entries(props)) {
-          this.attributes[key] = value
-
-          switch (key) {
-            case 'power':
-              lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')
-              break
-            case 'hue':
-              lightBulb.updateCharacteristic(this.characteristicClass.Hue, value)
-              break
-            case 'sat':
-              lightBulb.updateCharacteristic(this.characteristicClass.Saturation, value)
-              break
-            case 'bright':
-              lightBulb.updateCharacteristic(this.characteristicClass.Brightness, value)
-              break
-            case 'ct':
-              lightBulb.updateCharacteristic(this.characteristicClass.ColorTemperature, convertColorTemperature(value))
-              break
-          }
+    const updateProps = (props: Record<string, any>) => {
+      for (const [key, value] of Object.entries(props)) {
+        this.attributes[key] = value
+        switch (key) {
+          case 'power':
+            lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')
+            break
+          case 'hue':
+            lightBulb.updateCharacteristic(this.characteristicClass.Hue, value)
+            break
+          case 'sat':
+            lightBulb.updateCharacteristic(this.characteristicClass.Saturation, value)
+            break
+          case 'bright':
+            lightBulb.updateCharacteristic(this.characteristicClass.Brightness, value)
+            break
+          case 'ct':
+            lightBulb.updateCharacteristic(this.characteristicClass.ColorTemperature, convertColorTemperature(value))
+            break
         }
-      })
+      }
+    }
+
+    updateProps(device.info)
+
+    device
+      .on('command', (cmd: string) => platform.log.debug(cmd))
+      .on('props', updateProps)
+      // .socket
+      // .on('connect', () => platform.log.debug(`Connect to ${ device.host }:${ device.port }`))
 
     this
       .setInfo({
@@ -78,7 +83,7 @@ export class Accessory extends BaseAccessory {
               break
           }
         } catch (e: any) {
-          platform.log.error(e.message)
+          platform.log.error(e)
         }
       })
 

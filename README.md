@@ -56,3 +56,13 @@ TODO
 ### CLI
 
 TODO
+
+## Packages
+
+| name                |
+|---------------------|
+| [@homeiot/aqara]    |
+| [@homeiot/yeelight] |
+
+[@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara
+[@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight

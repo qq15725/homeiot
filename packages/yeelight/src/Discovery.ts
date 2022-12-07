@@ -4,20 +4,19 @@ import { Device } from './device'
 import { toCameCase } from './utils'
 import type { DiscoveredDeviceInfo } from './types'
 
-// export type DiscoveryEvents = {
-//   didDiscoverDevice: (device: Device) => void
-// }
+export type DiscoveryEvents = {
+  started: () => void
+  error: (error: Error) => void
+  discovered: (device: Device) => void
+}
 
 export class Discovery extends BaseDiscovery {
   constructor() {
     super(
-      '239.255.255.250',
-      1982,
+      '239.255.255.250', 1982,
       'M-SEARCH * HTTP/1.1\r\nMAN: "ssdp:discover"\r\nST: wifi_bulb\r\n',
-      { type: 'udp4', reuseAddr: true },
+      { serverPort: 1982 },
     )
-
-    this.on('message', this.onMessage.bind(this))
   }
 
   protected onMessage(data: Buffer) {
@@ -49,8 +48,6 @@ export class Discovery extends BaseDiscovery {
       return props
     }, {} as Record<string, any>)
 
-    const device = new Device(info as DiscoveredDeviceInfo)
-
-    this.emit('didDiscoverDevice', device)
+    this.emit('discovered', new Device(info as DiscoveredDeviceInfo))
   }
 }

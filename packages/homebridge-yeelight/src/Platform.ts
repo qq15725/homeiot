@@ -19,12 +19,14 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     api: API,
   ) {
     super(log, config, api)
-    this.api.on('didFinishLaunching', () => {
-      this.log.debug('Executed didFinishLaunching callback')
+
+    api.on('didFinishLaunching', () => {
       new Discovery()
-        .on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
+        .on('started', () => log.debug('Discovery started'))
+        .on('error', err => log.error(err))
+        .on('discovered', this.onDiscovered.bind(this))
         .start()
-        .then(() => this.log.debug('Discovery Started'))
+        .catch(err => log.error(err))
     })
   }
 
@@ -48,7 +50,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
   }
 
   // called when a Yeelight has responded to the discovery query
-  private onDidDiscoverDevice = (device: Device) => {
+  private onDiscovered = (device: Device) => {
     const { info, spec } = device
     const { id } = info
     const name = info.name || spec.name

@@ -1,51 +1,59 @@
 import { createSocket } from 'node:dgram'
 import { EventEmitter } from './EventEmitter'
-import type { Socket, SocketOptions } from 'node:dgram'
-
-// export type DiscoveryEvents = {
-//   message: (message: Buffer, rinfo: RemoteInfo) => void
-//   error: (error: Error) => void
-// }
+import type { RemoteInfo, Socket, SocketOptions } from 'node:dgram'
 
 export abstract class Discovery extends EventEmitter {
-  public readonly socket: Socket
+  private socket?: Socket
 
   constructor(
-    public readonly host: string,
-    public readonly port: number,
-    public readonly discoverMessage: string,
-    public readonly socketOptions?: Partial<SocketOptions>,
+    public readonly multicastHost: string,
+    public readonly multicastPort: number,
+    public readonly queryMessage: string,
+    public readonly options?: Partial<SocketOptions> & {
+      serverHost?: string
+      serverPort?: number
+      multicastTtl?: number
+      multicastInterface?: string
+    },
   ) {
     super()
-    this.socket = createSocket({ type: 'udp4', ...this.socketOptions })
-    this.socket.on('message', (...args) => this.emit('message', ...args))
-    this.socket.on('error', (error: Error) => this.emit('error', error))
   }
 
-  public discover(): Promise<this> {
+  public discover(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const buffer = Buffer.from(this.discoverMessage)
-      this.socket.send(buffer, 0, buffer.length, this.port, this.host, err => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(this)
-        }
-      })
+      const buffer = Buffer.from(this.queryMessage)
+      this.socket?.send(
+        buffer, 0, buffer.length, this.multicastPort, this.multicastHost,
+        err => err ? reject(err) : resolve(),
+      )
     })
   }
 
   public start(): Promise<this> {
     return new Promise((resolve, reject) => {
-      const onError = (error: Error) => reject(error)
-      this.socket.once('error', onError)
-      this.socket.bind(this.port, () => {
-        this.socket.off('error', onError)
-        this.socket.setBroadcast(true)
-        this.socket.setMulticastTTL(128)
-        this.socket.addMembership(this.host)
-        this.discover().finally(() => resolve(this))
+      const onError = reject
+      const socket = createSocket({
+        type: 'udp4',
+        reuseAddr: true,
+        ...this.options,
       })
+      this.socket = socket
+        .once('error', onError)
+        .once('listening', () => {
+          socket
+            .off('error', onError)
+            .on('message', this.onMessage.bind(this))
+            .on('error', error => this.emit('error', error))
+          socket.setBroadcast(true)
+          socket.addMembership(this.multicastHost)
+          socket.setMulticastTTL(this.options?.multicastTtl ?? 128)
+          if (this.options?.multicastInterface) socket.setMulticastInterface(this.options?.multicastInterface)
+          this.discover().finally(() => resolve(this))
+          this.emit('started')
+        })
+        .bind(this.options?.serverPort, this.options?.serverHost)
     })
   }
+
+  protected abstract onMessage(buffer: Buffer, remote: RemoteInfo): void
 }

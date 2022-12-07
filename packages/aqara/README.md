@@ -1,9 +1,9 @@
-# Yeelight SDK for Node.js
+# Aqara SDK for Node.js
 
 ## Installation
 
 ```shell
-pnpm add @homeiot/yeelight
+pnpm add @homeiot/aqara
 ```
 
 ## Usage
@@ -11,7 +11,7 @@ pnpm add @homeiot/yeelight
 ### Discover device
 
 ```ts
-import { Discovery } from '@homeiot/yeelight'
+import { Discovery } from '@homeiot/aqara'
 
 const log = console
 
@@ -25,4 +25,4 @@ new Discovery()
 
 ## Documentation
 
-[Yeelight WiFi Light Inter-Operation Specification](https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf)
+[aqara/aiot-gateway-local-api](https://github.com/aqara/aiot-gateway-local-api)

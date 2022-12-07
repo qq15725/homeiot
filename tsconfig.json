@@ -1,9 +1,10 @@
 {
   "files": [],
   "references": [
+    { "path": "packages/aqara" },
+    { "path": "packages/homebridge-yeelight" },
     { "path": "packages/shared" },
     { "path": "packages/shared-homebridge" },
     { "path": "packages/yeelight" },
-    { "path": "packages/homebridge-yeelight" },
   ]
 }
