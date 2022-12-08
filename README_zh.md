@@ -1,4 +1,4 @@
-<h1 align="center">Home IoT</h1>
+<h1 align="center">家庭物联网</h1>
 
 <p align="center">
   <a href="https://github.com/qq15725/homeiot/blob/master/LICENSE" class="mr-3">
@@ -14,21 +14,21 @@
 
 <p align="center"><a href="README.md">README</a> | <a href="README_zh.md">中文文档</a></p>
 
-## Installation
+## 安装
 
 ```shell
 pnpm add -g homeiot
 ```
 
-## Usage
+## 使用
 
-### By HomeBridge agency to HomeKit
+### 使用 HomeBridge 代理到 HomeKit
 
 ```shell
 pnpm add -g homebridge
 ```
 
-Configure `config.json` file `platforms` field
+配置 `config.json` 文件的 `platforms` 字段
 
 ```json
 {
@@ -41,25 +41,25 @@ Configure `config.json` file `platforms` field
 }
 ```
 
-Run
+执行
 
 ```shell
 homebridge
 ```
 
-### By Matter Protocol agency to HomeKit
+### 使用 Matter 协议代理到 HomeKit
 
 TODO
 
-### Web Server
+### Web 服务
 
 TODO
 
-### CLI
+### 命令行控制
 
 TODO
 
-## Packages
+## 子包
 
 | name                |
 |---------------------|

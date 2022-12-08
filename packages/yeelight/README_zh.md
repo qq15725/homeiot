@@ -14,17 +14,17 @@
 
 <p align="center"><a href="README.md">README</a> | <a href="README_zh.md">中文文档</a></p>
 
-<p align="center">Yeelight LAN control SDK for Node.js</p>
+<p align="center">Node.js 下的易来局域网控制 SDK</p>
 
-## Installation
+## 安装
 
 ```shell
 pnpm add @homeiot/yeelight
 ```
 
-## Usage
+## 使用
 
-### Discover device
+### 发现设备
 
 ```ts
 import { Discovery } from '@homeiot/yeelight'
@@ -39,6 +39,6 @@ new Discovery()
   .catch(err => log.error(err))
 ```
 
-## Official documentation
+## 官方文档
 
 [Yeelight WiFi Light Inter-Operation Specification](https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf)
