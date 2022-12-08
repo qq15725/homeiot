@@ -61,10 +61,10 @@ TODO
 
 ## Packages
 
-| name                |
-|---------------------|
-| [@homeiot/aqara]    |
-| [@homeiot/yeelight] |
+| name                | description              |
+|---------------------|--------------------------|
+| [@homeiot/aqara]    | Aqara LAN control SDK    |
+| [@homeiot/yeelight] | Yeelight LAN control SDK |
 
 [@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara
 [@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight

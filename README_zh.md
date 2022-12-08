@@ -61,10 +61,10 @@ TODO
 
 ## 子包
 
-| name                |
-|---------------------|
-| [@homeiot/aqara]    |
-| [@homeiot/yeelight] |
+| 名字                 | 描述        |
+|--------------------|-----------|
+| [@homeiot/aqara]   | 绿米局域网控制 SDK |
+| [@homeiot/yeelight] | 易来局域网控制 SDK |
 
-[@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara
-[@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight
+[@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara/README_zh.md
+[@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight/README_zh.md
