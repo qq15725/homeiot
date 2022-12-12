@@ -5,6 +5,7 @@
     { "path": "packages/homebridge-yeelight" },
     { "path": "packages/shared" },
     { "path": "packages/shared-homebridge" },
+    { "path": "packages/xiaomi" },
     { "path": "packages/yeelight" },
   ]
 }

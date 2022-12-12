@@ -8,7 +8,7 @@ export abstract class Discovery extends EventEmitter {
   constructor(
     public readonly multicastHost: string,
     public readonly multicastPort: number,
-    public readonly queryMessage: string,
+    public readonly helloPacket: string | Buffer,
     public readonly options?: Partial<SocketOptions> & {
       serverHost?: string
       serverPort?: number
@@ -21,7 +21,9 @@ export abstract class Discovery extends EventEmitter {
 
   public discover(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const buffer = Buffer.from(this.queryMessage)
+      const buffer = typeof this.helloPacket === 'string'
+        ? Buffer.from(this.helloPacket)
+        : this.helloPacket
       this.socket?.send(
         buffer, 0, buffer.length, this.multicastPort, this.multicastHost,
         err => err ? reject(err) : resolve(),
@@ -45,7 +47,9 @@ export abstract class Discovery extends EventEmitter {
             .on('message', this.onMessage.bind(this))
             .on('error', error => this.emit('error', error))
           socket.setBroadcast(true)
-          socket.addMembership(this.multicastHost)
+          if (this.multicastHost !== '255.255.255.255') {
+            socket.addMembership(this.multicastHost)
+          }
           socket.setMulticastTTL(this.options?.multicastTtl ?? 128)
           if (this.options?.multicastInterface) socket.setMulticastInterface(this.options?.multicastInterface)
           this.emit('started')

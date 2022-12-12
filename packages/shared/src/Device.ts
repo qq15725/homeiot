@@ -49,28 +49,24 @@ export abstract class Device extends EventEmitter {
     return promise
   }
 
+  protected async waitForConnect() {
+    let tryCounts = 0
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (this.isTcpSocket(this.socket) && this.socket.connecting && ++tryCounts < 30) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    if (tryCounts >= 30) {
+      return Promise.reject(new Error('Socket connect timeout'))
+    }
+    return this
+  }
+
   public connect(): Promise<this> {
     return new Promise((resolve, reject) => {
       const socketRaw = this.socket
       const type = this.options?.type ?? 'tcp'
       if (type === 'tcp') {
-        if (this.isTcpSocket(socketRaw)) {
-          if (socketRaw.connecting) {
-            return (async () => {
-              let tryCounts = 0
-              // eslint-disable-next-line no-unmodified-loop-condition
-              while (socketRaw && socketRaw.connecting && ++tryCounts < 30) {
-                await new Promise(resolve => setTimeout(resolve, 100))
-              }
-              if (tryCounts >= 30) {
-                reject(new Error('Socket connect timeout'))
-              } else {
-                resolve(this)
-              }
-            })()
-          }
-          return resolve(this)
-        }
+        if (this.isTcpSocket(socketRaw)) return this.waitForConnect()
         const socket = new TcpSocket(this.options)
         const onConnectTimeout = () => socket.destroy(new Error('Socket connect timeout'))
         const onConnectError = reject
@@ -109,7 +105,7 @@ export abstract class Device extends EventEmitter {
     })
   }
 
-  public send(str: string): Promise<void> {
+  public send(str: string | Uint8Array): Promise<void> {
     return new Promise((resolve, reject) => {
       this.connect().catch(reject).then(() => {
         const onError = (e?: Error | null) => e ? reject(e) : resolve()
@@ -118,7 +114,7 @@ export abstract class Device extends EventEmitter {
           socket.write(str, onError)
           this.emit('sended', str)
         } else if (this.isUdpSocket(socket)) {
-          socket.send(str, this.port, this.host, onError)
+          socket.send(str, 0, str.length, this.port, this.host, onError)
           this.emit('sended', str)
         } else {
           reject(new Error('Socket is closed'))
