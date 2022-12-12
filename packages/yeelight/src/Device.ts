@@ -3,9 +3,9 @@ import { EOL } from './constants'
 import { isErrorMessage, isPropsMessage, isResultMessage, toSnakeCase } from './utils'
 import { getSpec } from './specs'
 import type {
+  DeviceInfo,
   DeviceModelSpec,
   DevicePropName,
-  DiscoveredDeviceInfo,
   Effect,
 } from './types'
 
@@ -14,7 +14,7 @@ export class Device extends BaseDevice {
   public readonly spec: DeviceModelSpec
 
   constructor(
-    public readonly info: DiscoveredDeviceInfo,
+    public readonly info: DeviceInfo,
   ) {
     const endpoint = info.location.split('//')[1]
     const [host, port] = endpoint.split(':')

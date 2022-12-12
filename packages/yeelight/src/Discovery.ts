@@ -2,7 +2,7 @@ import { Discovery as BaseDiscovery } from '@homeiot/shared'
 import { EOL } from './constants'
 import { Device } from './device'
 import { toCameCase } from './utils'
-import type { DiscoveredDeviceInfo } from './types'
+import type { DeviceInfo } from './types'
 
 export type DiscoveryEvents = {
   started: () => void
@@ -19,8 +19,8 @@ export class Discovery extends BaseDiscovery {
     )
   }
 
-  protected onMessage(buffer: Buffer) {
-    const [firstLine, ...lines] = buffer.toString().split(EOL)
+  protected onMessage(message: Buffer) {
+    const [firstLine, ...lines] = message.toString().split(EOL)
 
     if (
       !firstLine.includes('HTTP/1.1')
@@ -68,7 +68,7 @@ export class Discovery extends BaseDiscovery {
           }
           return props
         },
-        { from } as DiscoveredDeviceInfo,
+        { from } as DeviceInfo,
       )
 
     if (!info.location.startsWith('yeelight://')) return

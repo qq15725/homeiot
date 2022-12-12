@@ -137,7 +137,7 @@ export type DeviceMethodName = 'get_prop'
 
 export type Effect = 'sudden' | 'smooth'
 
-export interface DiscoveredDeviceInfo {
+export interface DeviceInfo {
   [key: string]: any
   from: 'response' | 'notify' | string
   // field contains the service access point of the smart LED deivce.

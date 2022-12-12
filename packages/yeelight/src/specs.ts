@@ -1,4 +1,4 @@
-import type { DeviceModelSpec, DiscoveredDeviceInfo } from './types'
+import type { DeviceInfo, DeviceModelSpec } from './types'
 
 export const EMPTY_SPEC: DeviceModelSpec = {
   colorTemperature: { min: 2700, max: 2700 },
@@ -214,7 +214,7 @@ export const SPECS: { [index: string]: DeviceModelSpec } = {
   },
 }
 
-export function getSpec(info?: DiscoveredDeviceInfo): DeviceModelSpec {
+export function getSpec(info?: DeviceInfo): DeviceModelSpec {
   const spec = {
     ...info?.model
       ? info.model in SPECS
