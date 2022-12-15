@@ -27,18 +27,39 @@ pnpm add @homeiot/xiaomi
 ### 发现设备
 
 ```ts
-import { Discovery } from '@homeiot/xiaomi'
+import { Discovery, Api } from '@homeiot/xiaomi'
 
 const log = console
 
-new Discovery()
-  .on('started', () => log.debug('Discovery Started'))
-  .on('error', err => log.error(err))
-  .on('discovered', device => log.debug(device))
-  .start()
-  .catch(err => log.error(err))
+new Api('xiaomi-username', 'password')
+  .getDevices()
+  .then(devices => {
+    const didDevices = devices.reduce(
+      (device, map) => ({ ...map, [Number(device.did)]: device.token }),
+      {} as Record<number, any>,
+    )
+
+    new Discovery(didDevices)
+      .on('started', () => log.debug('Discovery Started'))
+      .on('error', err => log.error(err))
+      .on('missingToken', remote => log.error(remote))
+      .on('discovered', device => log.debug(device))
+      .start()
+      .catch(err => log.error(err))
+  })
 ```
 
 ## 官方文档
 
+### Miot binary Protocol
+
 [Xiaomi Mi Home Binary Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
+
+### Miot spec v2
+
+- [actions](http://miot-spec.org/miot-spec-v2/spec/actions)
+- [devices](http://miot-spec.org/miot-spec-v2/spec/devices)
+- [events](http://miot-spec.org/miot-spec-v2/spec/events)
+- [services](http://miot-spec.org/miot-spec-v2/spec/services)
+- [properties](http://miot-spec.org/miot-spec-v2/spec/properties)
+- [instances](http://miot-spec.org/miot-spec-v2/instances?status=all)

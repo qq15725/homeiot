@@ -11,7 +11,7 @@ export type DiscoveryEvents = {
 
 export class Discovery extends BaseDiscovery {
   constructor(
-    protected readonly tokens: Record<string, string> = {},
+    protected readonly didTokens: Record<number, string> = {},
   ) {
     super(
       '255.255.255.255', 54321,
@@ -52,7 +52,7 @@ export class Discovery extends BaseDiscovery {
     if (!stamp || encrypted.length > 0) return
 
     const token = checksum.match(/^[fF0]+$/)
-      ? this.tokens[host]
+      ? this.didTokens[deviceId]
       : checksum
 
     if (!token) {
@@ -65,7 +65,7 @@ export class Discovery extends BaseDiscovery {
       new Device({
         host,
         port,
-        did: Number(deviceId),
+        did: deviceId,
         serverStamp: Number(stamp.toString()),
         serverStampTime: Date.now(),
         token,
