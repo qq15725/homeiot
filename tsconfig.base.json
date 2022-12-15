@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     /* 基础选项 */
-    "incremental": true, /* 只编译修改过的文件，生成 tsconfig.tsbuildinfo */
     "target": "es2020", /* 指定 ECMAScript 目标版本: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' 或 'ESNEXT'。 */
-    "module": "commonjs", /* 指定模块代码生成: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 或 'ESNext'。 */
+    "module": "ESNext", /* 指定模块代码生成: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 或 'ESNext'。 */
     "lib": ["esnext"], /* 指定要包含在编译中的库文件。 */
     "skipLibCheck": true,
     "allowJs": false, /* 允许 javascript 文件被编译。 */
@@ -29,8 +28,6 @@
     /* 实验选项 */
     "experimentalDecorators": true, /* 启用对 ES7 装饰器的实验性支持。 */
     "emitDecoratorMetadata": true, /* 为 decorator 的发射类型元数据提供实验性支持。 */
-
-    "composite": true
   },
   "exclude": [
     "**/dist/**",

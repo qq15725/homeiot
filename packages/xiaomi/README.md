@@ -41,4 +41,15 @@ new Discovery()
 
 ## Official documentation
 
+### Miot binary Protocol
+
 [Xiaomi Mi Home Binary Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
+
+### Miot spec v2
+
+- [actions](http://miot-spec.org/miot-spec-v2/spec/actions)
+- [devices](http://miot-spec.org/miot-spec-v2/spec/devices)
+- [events](http://miot-spec.org/miot-spec-v2/spec/events)
+- [services](http://miot-spec.org/miot-spec-v2/spec/services)
+- [properties](http://miot-spec.org/miot-spec-v2/spec/properties)
+- [instances](http://miot-spec.org/miot-spec-v2/instances?status=all)

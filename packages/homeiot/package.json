@@ -24,7 +24,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "rimraf ./dist && tsc"
+    "build": "tsc"
   },
   "dependencies": {
     "@homeiot/homebridge-yeelight": "workspace:*"
