@@ -6,7 +6,7 @@
   ],
   "ext": "js",
   "ignore": [],
-  "exec": "DEBUG=* homebridge -D -P ./packages -U ./homebridge",
+  "exec": "DEBUG=-babel,* homebridge -D -P ./packages -U ./homebridge",
   "signal": "SIGTERM",
   "env": {
     "NODE_OPTIONS": "--trace-warnings"

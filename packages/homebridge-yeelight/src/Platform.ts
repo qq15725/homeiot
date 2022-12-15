@@ -4,49 +4,28 @@ import { Accessory } from './Accessory'
 import type {
   API,
   DynamicPlatformPlugin,
-  Logging,
   PlatformAccessory,
-  PlatformConfig,
 } from 'homebridge'
 
 export class Platform extends BasePlatform<Accessory> implements DynamicPlatformPlugin {
-  static readonly pluginIdentifier = '@homeiot/homebridge-yeelight'
-  static readonly platformName = 'yeelight'
-
-  constructor(
-    log: Logging,
-    config: PlatformConfig,
-    api: API,
-  ) {
-    super(log, config, api)
-
-    api.on('didFinishLaunching', () => {
-      new Discovery()
-        .on('started', () => log.debug('Discovery started'))
-        .on('error', err => log.error(err))
-        .on('discovered', this.onDiscovered.bind(this))
-        .start()
-        .catch(err => log.error(err))
-    })
-  }
+  public static readonly pluginIdentifier = '@homeiot/homebridge-yeelight'
+  public static readonly platformName = 'yeelight'
 
   public static register(api: API) {
     api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
   }
 
-  /**
-   * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to setup event handlers for characteristics and update respective values.
-   */
-  configureAccessory(accessory: PlatformAccessory) {
-    const { displayName, context } = accessory
-    const { id, model } = context
-    if (this.accessories.has(id)) {
-      this.log.warn(`Ingnoring duplicate accessory from cache: ${ displayName } (${ model })`)
-      return
-    }
-    this.log.info(`Loading accessory from cache: ${ displayName } (${ model })`)
-    this.accessories.set(id, new Accessory(this, accessory, new Device(context as any)))
+  protected onDidFinishLaunching() {
+    new Discovery()
+      .on('started', () => this.log.debug('Discovery started'))
+      .on('error', err => this.log.error(err))
+      .on('discovered', this.onDiscovered.bind(this))
+      .start()
+      .catch(err => this.log.error(err))
+  }
+
+  protected restoreAccessory(accessory: PlatformAccessory) {
+    return new Accessory(this, accessory, new Device(accessory.context as any))
   }
 
   private onDiscovered = (device: Device) => {

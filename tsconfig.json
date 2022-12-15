@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/aqara" },
+    { "path": "packages/homebridge-xiaomi" },
     { "path": "packages/homebridge-yeelight" },
     { "path": "packages/shared" },
     { "path": "packages/shared-homebridge" },
