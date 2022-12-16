@@ -100,8 +100,8 @@ export class Api {
   }
 
   constructor(options: ApiOptions) {
-    this.username = options.username
-    this.password = options.password
+    this.username = String(options.username)
+    this.password = String(options.password)
     this.locale = options.locale ?? 'en'
     if (options.country) this.baseURL = `https://${ options.country }.api.io.mi.com/app`
   }

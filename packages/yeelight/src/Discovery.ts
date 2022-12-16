@@ -14,7 +14,11 @@ export class Discovery extends BaseDiscovery {
   constructor() {
     super(
       '239.255.255.250', 1982,
-      'M-SEARCH * HTTP/1.1\r\nMAN: "ssdp:discover"\r\nST: wifi_bulb\r\n',
+      [
+        'M-SEARCH * HTTP/1.1',
+        'MAN: "ssdp:discover"',
+        'ST: wifi_bulb',
+      ].join(EOL),
       { serverPort: 1982 },
     )
   }

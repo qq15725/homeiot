@@ -5,7 +5,7 @@ import type { RemoteInfo } from 'node:dgram'
 export type DiscoveryEvents = {
   started: () => void
   error: (error: Error) => void
-  missingToken: (remote: RemoteInfo) => void
+  missingToken: (info: Record<string, any>, remote: RemoteInfo) => void
   discovered: (device: Device) => void
 }
 
@@ -55,21 +55,19 @@ export class Discovery extends BaseDiscovery {
       ? this.didTokens[deviceId]
       : checksum
 
+    const info = {
+      host,
+      port,
+      did: deviceId,
+      serverStamp: Number(stamp.toString()),
+      serverStampTime: Date.now(),
+    }
+
     if (!token) {
-      this.emit('missingToken', remote)
+      this.emit('missingToken', info, remote)
       return
     }
 
-    this.emit(
-      'discovered',
-      new Device({
-        host,
-        port,
-        did: deviceId,
-        serverStamp: Number(stamp.toString()),
-        serverStampTime: Date.now(),
-        token,
-      }),
-    )
+    this.emit('discovered', new Device({ ...info, token }))
   }
 }
