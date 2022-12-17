@@ -1,2 +1,2 @@
-export * from './Accessory'
-export * from './Platform'
+export * from './BaseAccessory'
+export * from './BasePlatform'

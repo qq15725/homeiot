@@ -1,13 +1,13 @@
 import { EventEmitter } from '@homeiot/shared'
 import type { Characteristic, PlatformAccessory, Service, WithUUID } from 'homebridge'
-import type { Platform } from './Platform'
+import type { BasePlatform } from './BasePlatform'
 
-export abstract class Accessory extends EventEmitter {
+export abstract class BaseAccessory extends EventEmitter {
   public readonly serviceClass: typeof Service
   public readonly characteristicClass: typeof Characteristic
 
   constructor(
-    public readonly platform: Platform,
+    public readonly platform: BasePlatform,
     public readonly platformAccessory: PlatformAccessory,
     public attributes: Record<string, any> = {},
   ) {

@@ -1,4 +1,4 @@
-import { Accessory as BaseAccessory } from '@homeiot/shared-homebridge'
+import { BaseAccessory } from '@homeiot/shared-homebridge'
 import { Platform } from './Platform'
 import type { Device } from '@homeiot/yeelight'
 import type { PlatformAccessory } from 'homebridge'

@@ -1,5 +1,5 @@
 import { Device, Discovery } from '@homeiot/yeelight'
-import { Platform as BasePlatform } from '@homeiot/shared-homebridge'
+import { BasePlatform } from '@homeiot/shared-homebridge'
 import { Accessory } from './Accessory'
 import type {
   API,
@@ -15,33 +15,44 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
   }
 
+  protected getId(context: any) {
+    return context.id ? String(context.id) : undefined
+  }
+
   protected onDidFinishLaunching() {
     new Discovery()
       .on('error', err => this.log.error(err))
       .on('didFinishLaunching', () => this.log.debug('Local discovery started'))
-      .on('didDiscoverDevice', this.onDiscovered)
+      .on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
       .start()
       .catch(err => this.log.error(err))
   }
 
-  protected restoreAccessory(accessory: PlatformAccessory) {
-    return new Accessory(this, accessory, new Device(accessory.context as any))
+  protected onDidDiscoverDevice(device: Record<string, any>) {
+    const { displayName } = device
+    const id = this.getId(device)
+    if (!id) return
+    // eslint-disable-next-line new-cap
+    const accessory = new this.api.platformAccessory(
+      displayName,
+      this.api.hap.uuid.generate(id),
+    )
+    accessory.context = { ...device }
+    if (!this.accessories.has(id)) {
+      this.log(`Initializing new accessory ${ id } with name ${ displayName }...`)
+      this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
+    }
+    this.onDidDiscoverAccessory(accessory)
   }
 
-  private onDiscovered = (device: Record<string, any>) => {
-    const id = device.id
+  protected onDidDiscoverAccessory(accessory: PlatformAccessory) {
+    const { context } = accessory
+    const id = this.getId(context)
     if (!id) return
-    const name = device.displayName
-    if (!this.accessories.has(id)) {
-      this.log(`Initializing new accessory ${ id } with name ${ name }...`)
-      const uuid = this.api.hap.uuid.generate(id)
-      // eslint-disable-next-line new-cap
-      const accessory = new this.api.platformAccessory(name, uuid)
-      accessory.context = { ...device }
-      this.accessories.set(id, new Accessory(this, accessory, new Device(device as any)))
-      this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
+    if (this.accessories.has(id)) {
+      this.accessories.get(id)?.updateProps(context)
     } else {
-      this.accessories.get(id)!.updateProps(device)
+      this.accessories.set(id, new Accessory(this, accessory, new Device({ ...context } as any)))
     }
   }
 }

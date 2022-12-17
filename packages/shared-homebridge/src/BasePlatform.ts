@@ -1,7 +1,7 @@
 import type { API, Characteristic, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge'
-import type { Accessory } from './Accessory'
+import type { BaseAccessory } from './BaseAccessory'
 
-export abstract class Platform<T extends Accessory = Accessory> {
+export abstract class BasePlatform<T extends BaseAccessory = BaseAccessory> {
   public readonly accessories = new Map<string, T>()
   public readonly serviceClass: typeof Service
   public readonly characteristicClass: typeof Characteristic
@@ -16,21 +16,21 @@ export abstract class Platform<T extends Accessory = Accessory> {
     api.on('didFinishLaunching', this.onDidFinishLaunching.bind(this))
   }
 
+  protected abstract getId(context: any): string | undefined
+
   protected abstract onDidFinishLaunching(): void
 
-  protected abstract restoreAccessory(accessory: PlatformAccessory): T | undefined
+  protected abstract onDidDiscoverAccessory(accessory: PlatformAccessory): void
 
   public configureAccessory(accessory: PlatformAccessory) {
     const { displayName, context } = accessory
-    const { id, model } = context
+    const id = this.getId(context)
+    if (!id) return
     if (this.accessories.has(id)) {
-      this.log.warn(`Ingnoring duplicate accessory from cache: ${ displayName } (${ model })`)
-      return
-    }
-    this.log.info(`Loading accessory from cache: ${ displayName } (${ model })`)
-    const val = this.restoreAccessory(accessory)
-    if (val) {
-      this.accessories.set(id, val)
+      this.log.warn(`Ingnoring duplicate accessory from cache: ${ displayName }`)
+    } else {
+      this.log.info(`Loading accessory from cache: ${ displayName }`)
+      this.onDidDiscoverAccessory(accessory)
     }
   }
 }
