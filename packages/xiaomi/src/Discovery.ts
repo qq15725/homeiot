@@ -1,12 +1,11 @@
-import { Discovery as BaseDiscovery } from '@homeiot/shared'
+import { BaseDiscovery } from '@homeiot/shared'
 import { Device } from './Device'
+import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { RemoteInfo } from 'node:dgram'
 
-export type DiscoveryEvents = {
-  started: () => void
-  error: (error: Error) => void
+export type DiscoveryEvents = BaseDiscoveryEvents & {
   missingToken: (info: Record<string, any>, remote: RemoteInfo) => void
-  discovered: (device: Device) => void
+  didDiscoverDevice: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -68,6 +67,6 @@ export class Discovery extends BaseDiscovery {
       return
     }
 
-    this.emit('discovered', new Device({ ...info, token }))
+    this.emit('didDiscoverDevice', new Device({ ...info, token }))
   }
 }

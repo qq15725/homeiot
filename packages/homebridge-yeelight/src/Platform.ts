@@ -17,9 +17,9 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
 
   protected onDidFinishLaunching() {
     new Discovery()
-      .on('started', () => this.log.debug('Discovery started'))
       .on('error', err => this.log.error(err))
-      .on('discovered', this.onDiscovered.bind(this))
+      .on('didFinishLaunching', () => this.log.debug('Local discovery started'))
+      .on('didDiscoverDevice', this.onDiscovered)
       .start()
       .catch(err => this.log.error(err))
   }
@@ -28,21 +28,20 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     return new Accessory(this, accessory, new Device(accessory.context as any))
   }
 
-  private onDiscovered = (device: Device) => {
-    const { info, spec } = device
-    const { id } = info
-    const name = info.name || spec.name
-
+  private onDiscovered = (device: Record<string, any>) => {
+    const id = device.id
+    if (!id) return
+    const name = device.displayName
     if (!this.accessories.has(id)) {
       this.log(`Initializing new accessory ${ id } with name ${ name }...`)
       const uuid = this.api.hap.uuid.generate(id)
       // eslint-disable-next-line new-cap
       const accessory = new this.api.platformAccessory(name, uuid)
-      accessory.context = { ...info }
-      this.accessories.set(id, new Accessory(this, accessory, device))
+      accessory.context = { ...device }
+      this.accessories.set(id, new Accessory(this, accessory, new Device(device as any)))
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
     } else {
-      this.accessories.get(id)!.updateProps(info)
+      this.accessories.get(id)!.updateProps(device)
     }
   }
 }

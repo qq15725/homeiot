@@ -1,3 +1,3 @@
-export * from './Device'
-export * from './Discovery'
+export * from './BaseDevice'
+export * from './BaseDiscovery'
 export * from './EventEmitter'

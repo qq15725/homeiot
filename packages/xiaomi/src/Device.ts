@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash } from 'node:crypto'
-import { Device as BaseDevice } from '@homeiot/shared'
+import { BaseDevice } from '@homeiot/shared'
 
 export interface DeviceInfo {
   host: string

@@ -4,14 +4,14 @@ import { EventEmitter } from './EventEmitter'
 import type { SocketConstructorOpts } from 'node:net'
 import type { Socket as UdpSocket } from 'node:dgram'
 
-export abstract class Device extends EventEmitter {
-  protected readonly promises = new Map<string | number, { timeout: any; resolve: any; reject: any }>()
+export abstract class BaseDevice extends EventEmitter {
+  private readonly promises = new Map<string | number, { timeout: any; resolve: any; reject: any }>()
   private socket?: TcpSocket | UdpSocket
 
   constructor(
     public readonly host: string,
     public readonly port: number,
-    public readonly options?: {
+    private readonly options?: {
       type?: 'tcp' | 'udp4' | 'udp6'
       encoding?: BufferEncoding
       timeout?: number

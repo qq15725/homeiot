@@ -1,11 +1,10 @@
-import { Discovery as BaseDiscovery } from '@homeiot/shared'
+import { BaseDiscovery } from '@homeiot/shared'
 import { Device } from './Device'
+import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { DeviceInfo } from './Device'
 
-export type DiscoveryEvents = {
-  started: () => void
-  error: (error: Error) => void
-  discovered: (device: Device) => void
+export type DiscoveryEvents = BaseDiscoveryEvents & {
+  didDiscoverDevice: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -33,7 +32,7 @@ export class Discovery extends BaseDiscovery {
 
     switch (cmd) {
       case 'iam':
-        this.emit('discovered', new Device({ ...props } as DeviceInfo))
+        this.emit('didDiscoverDevice', new Device({ ...props } as DeviceInfo))
         break
     }
   }

@@ -17,10 +17,10 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
 
   protected onDidFinishLaunching() {
     new Discovery()
-      .on('started', () => this.log.debug('Discovery started'))
       .on('error', err => this.log.error(err))
+      .on('didFinishLaunching', () => this.log.debug('Discovery started'))
+      .on('didDiscoverDevice', this.onDiscovered.bind(this))
       .on('missingToken', remote => this.log.error(remote))
-      .on('discovered', this.onDiscovered.bind(this))
       .start()
       .catch(err => this.log.error(err))
   }

@@ -26,12 +26,12 @@ export function createCli(
     .command('discover', 'List all devices from local discover')
     .action(() => {
       const discovery = new Discovery()
-        .on('started', () => {
+        .on('didFinishLaunching', () => {
           consola.start('looking for local devices...')
-          setInterval(() => discovery.discover(), 5000)
+          setInterval(() => discovery.search(), 5000)
         })
+        .on('didDiscoverDevice', device => consola.log(device))
         .on('missingToken', (info, remote) => consola.log(info, remote))
-        .on('discovered', device => consola.log(device))
       discovery.start()
     })
 

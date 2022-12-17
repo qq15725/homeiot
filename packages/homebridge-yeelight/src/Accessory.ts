@@ -8,16 +8,15 @@ function convertColorTemperature(value: number): number {
 }
 
 export class Accessory extends BaseAccessory {
-  static readonly nameCount = new Map<string, number>()
+  private static readonly nameCount = new Map<string, number>()
 
   constructor(
     platform: Platform,
     platformAccessory: PlatformAccessory,
     public readonly device: Device,
   ) {
-    super(platform, platformAccessory, { ...device.info })
-    const info = device.info
-    let name = device.spec.name
+    super(platform, platformAccessory, { ...device })
+    let name = device.displayName
     const count = (Accessory.nameCount.get(name) || 0) + 1
     Accessory.nameCount.set(name, count)
     if (count > 1) name = `${ name } ${ count }`
@@ -27,15 +26,15 @@ export class Accessory extends BaseAccessory {
       .on('sended', (str: string) => platform.log.debug(str))
       .on('updated', props => this.updateProps(props))
 
-    this.updateProps(info)
+    this.updateProps(device)
 
     this
       .setInfo({
         manufacturer: Platform.platformName,
-        model: device.spec.name,
+        model: device.modelName ?? device.model,
         name,
-        serialNumber: info.id,
-        firmwareRevision: info.fwVer,
+        serialNumber: device.id,
+        firmwareRevision: device.fwVer,
       })
       .on('setAttribute', async (key: string, value: any) => {
         try {
@@ -77,7 +76,7 @@ export class Accessory extends BaseAccessory {
       v => this.setAttribute('bright', v),
     )
 
-    if (device.spec.color) {
+    if (device.supportsColor) {
       this.onCharacteristic(
         lightBulb.getCharacteristic(this.characteristicClass.Hue),
         () => this.getAttribute('hue'),
@@ -91,7 +90,7 @@ export class Accessory extends BaseAccessory {
       )
     }
 
-    if (device.spec.colorTemperature.min && device.spec.colorTemperature.max) {
+    if (device.supportsColorTemperature) {
       const characteristic = (
         lightBulb.getCharacteristic(this.characteristicClass.ColorTemperature)
         || lightBulb.addOptionalCharacteristic(this.characteristicClass.ColorTemperature)
@@ -104,16 +103,16 @@ export class Accessory extends BaseAccessory {
       )
 
       characteristic.setProps({
-        maxValue: convertColorTemperature(device.spec.colorTemperature.min),
-        minValue: convertColorTemperature(device.spec.colorTemperature.max),
+        maxValue: convertColorTemperature(device.supportsColorTemperature.min),
+        minValue: convertColorTemperature(device.supportsColorTemperature.max),
       })
     }
   }
 
-  public updateProps(props: Record<string, any>) {
+  public updateProps(info: Record<string, any>) {
     const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
 
-    for (const [key, value] of Object.entries(props)) {
+    for (const [key, value] of Object.entries(info)) {
       this.attributes[key] = value
       switch (key) {
         case 'power':

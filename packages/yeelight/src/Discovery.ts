@@ -1,13 +1,11 @@
-import { Discovery as BaseDiscovery } from '@homeiot/shared'
-import { EOL } from './constants'
+import { BaseDiscovery } from '@homeiot/shared'
+import { EOL, toCameCase } from './utils'
 import { Device } from './device'
-import { toCameCase } from './utils'
-import type { DeviceInfo } from './types'
+import type { BaseDiscoveryEvents } from '@homeiot/shared'
+import type { RemoteInfo } from 'node:dgram'
 
-export type DiscoveryEvents = {
-  started: () => void
-  error: (error: Error) => void
-  discovered: (device: Device) => void
+export type DiscoveryEvents = BaseDiscoveryEvents & {
+  didDiscoverDevice: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -23,7 +21,7 @@ export class Discovery extends BaseDiscovery {
     )
   }
 
-  protected onMessage(message: Buffer) {
+  protected onMessage(message: Buffer, remote: RemoteInfo) {
     const [firstLine, ...lines] = message.toString().split(EOL)
 
     if (
@@ -72,11 +70,22 @@ export class Discovery extends BaseDiscovery {
           }
           return props
         },
-        { from } as DeviceInfo,
+        { from } as Record<string, any>,
       )
 
-    if (!info.location.startsWith('yeelight://')) return
+    if (!info.location?.startsWith('yeelight://')) return
 
-    this.emit('discovered', new Device(info))
+    const [host, port] = info.location.split('//')[1].split(':')
+
+    if (remote.address !== host || remote.port !== port) return
+
+    this.emit(
+      'didDiscoverDevice',
+      new Device({
+        ...info,
+        host,
+        port: Number(port),
+      }),
+    )
   }
 }

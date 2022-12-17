@@ -24,19 +24,17 @@ pnpm add @homeiot/aqara
 
 ## 使用
 
-### 发现设备
+### 发现本地设备
 
 ```ts
 import { Discovery } from '@homeiot/aqara'
 
-const log = console
-
 new Discovery()
-  .on('started', () => log.debug('Discovery Started'))
-  .on('error', err => log.error(err))
-  .on('discovered', device => log.debug(device))
+  .on('error', err => console.error(err))
+  .on('didFinishLaunching', () => console.debug('Local discovery started'))
+  .on('didDiscoverDevice', device => console.debug(device))
   .start()
-  .catch(err => log.error(err))
+  .catch(err => console.error(err))
 ```
 
 ## 官方文档

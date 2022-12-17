@@ -2,7 +2,12 @@ import { createSocket } from 'node:dgram'
 import { EventEmitter } from './EventEmitter'
 import type { RemoteInfo, Socket, SocketOptions } from 'node:dgram'
 
-export abstract class Discovery extends EventEmitter {
+export type BaseDiscoveryEvents = {
+  error: (error: Error) => void
+  didFinishLaunching: () => void
+}
+
+export abstract class BaseDiscovery extends EventEmitter {
   private socket?: Socket
 
   constructor(
@@ -19,7 +24,7 @@ export abstract class Discovery extends EventEmitter {
     super()
   }
 
-  public discover(): Promise<void> {
+  public search(): Promise<void> {
     return new Promise((resolve, reject) => {
       const buffer = typeof this.helloPacket === 'string'
         ? Buffer.from(this.helloPacket)
@@ -52,14 +57,12 @@ export abstract class Discovery extends EventEmitter {
           }
           socket.setMulticastTTL(this.options?.multicastTtl ?? 128)
           if (this.options?.multicastInterface) socket.setMulticastInterface(this.options?.multicastInterface)
-          this.emit('started')
-          this.discover()
-            .catch(() => {})
-            .finally(() => resolve(this))
+          this.emit('didFinishLaunching')
+          this.search().catch(() => {}).finally(() => resolve(this))
         })
         .bind(this.options?.serverPort, this.options?.serverHost)
     })
   }
 
-  protected abstract onMessage(buffer: Buffer, remote: RemoteInfo): void
+  protected abstract onMessage(message: Buffer, remote: RemoteInfo): void
 }

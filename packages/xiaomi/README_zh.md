@@ -24,14 +24,12 @@ pnpm add @homeiot/xiaomi
 
 ## 使用
 
-### 发现设备
+### 发现本地设备
 
 ```ts
 import { Discovery, Api } from '@homeiot/xiaomi'
 
-const log = console
-
-new Api('xiaomi-username', 'password')
+new Api('xiaomi-user-name', 'password')
   .getDevices()
   .then(devices => {
     const didDevices = devices.reduce(
@@ -40,12 +38,12 @@ new Api('xiaomi-username', 'password')
     )
 
     new Discovery(didDevices)
-      .on('started', () => log.debug('Discovery Started'))
-      .on('error', err => log.error(err))
-      .on('missingToken', (info, remote) => log.error(info, remote))
-      .on('discovered', device => log.debug(device))
+      .on('error', err => console.error(err))
+      .on('didFinishLaunching', () => console.debug('Local discovery started'))
+      .on('didDiscoverDevice', device => console.debug(device))
+      .on('missingToken', (info, remote) => console.error(info, remote))
       .start()
-      .catch(err => log.error(err))
+      .catch(err => console.error(err))
   })
 ```
 

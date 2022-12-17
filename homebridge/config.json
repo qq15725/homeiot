@@ -7,7 +7,7 @@
   "description": "This is an configuration file for local development of the plugin",
   "accessories": [],
   "platforms": [
-    { "platform": "yeelight" },
-    { "platform": "xiaomi" }
+    { "platform": "yeelight", "name": "Yeelight" },
+    { "platform": "xiaomi", "name": "Xiaomi" }
   ]
 }
