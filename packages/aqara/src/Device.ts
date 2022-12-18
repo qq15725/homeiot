@@ -43,30 +43,22 @@ export class Device extends BaseDevice {
       return
     }
     const { cmd, data } = message
-    this.pullPromise(this.uuid(cmd))?.resolve(data)
+    this.pullWaitingRequest(this.uuid(cmd))?.resolve(data)
   }
 
-  public invoke(cmd: string, params?: Record<string, any>): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const payload: Record<string, any> = {
-        cmd,
-        model: this.model,
-        sid: this.sid,
-        short_id: this.shortId,
-      }
-      if (params) payload.data = JSON.stringify(params)
-      const id = this.uuid(cmd)
-      this
-        .setPromose(id, resolve, reject)
-        .send(JSON.stringify(payload))
-        .catch(e => {
-          reject(e)
-          this.pullPromise(id)
-        })
-    })
+  public call(cmd: string, params?: Record<string, any>): Promise<any> {
+    const payload: Record<string, any> = {
+      cmd,
+      model: this.model,
+      sid: this.sid,
+      short_id: this.shortId,
+    }
+    if (params) payload.data = JSON.stringify(params)
+    const id = this.uuid(cmd)
+    return this.request(id, JSON.stringify(payload))
   }
 
-  public write = (props: Record<string, any>): Promise<Record<string, any>> => this.invoke('write', { ...props, key: this.generateKey() })
-  public getIdList = (): Promise<string[]> => this.invoke('get_id_list')
-  public read = (): Promise<Record<string, any>> => this.invoke('read')
+  public write = (props: Record<string, any>): Promise<Record<string, any>> => this.call('write', { ...props, key: this.generateKey() })
+  public getIdList = (): Promise<string[]> => this.call('get_id_list')
+  public read = (): Promise<Record<string, any>> => this.call('read')
 }

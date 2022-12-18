@@ -28,13 +28,21 @@ pnpm add @homeiot/yeelight
 
 ```ts
 import { Discovery } from '@homeiot/yeelight'
+import type { Device } from '@homeiot/yeelight'
 
 new Discovery()
   .on('error', err => console.error(err))
   .on('didFinishLaunching', () => console.debug('Local discovery started'))
-  .on('didDiscoverDevice', device => console.debug(device))
+  .on('didDiscoverDevice', onDidDiscoverDevice)
   .start()
   .catch(err => console.error(err))
+
+function onDidDiscoverDevice(device: Device) {
+  // Smart LED is turned on
+  device.power = 'on'
+  // Brightness percentage. Range 1 ~ 100
+  device.bright = 50
+}
 ```
 
 ## Official documentation

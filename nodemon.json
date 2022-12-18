@@ -1,12 +1,12 @@
 {
   "watch": [
-    "packages/shared/dist",
-    "packages/homebridge-yeelight/dist",
-    "packages/yeelight/dist"
+    "packages/shared/src",
+    "packages/homebridge-yeelight/src",
+    "packages/yeelight/src"
   ],
   "ext": "js",
   "ignore": [],
-  "exec": "DEBUG=-babel,* homebridge -D -P ./packages -U ./homebridge",
+  "exec": "DEBUG=-babel,-HAP-NodeJS*,* homebridge -D -P ./packages -U ./homebridge",
   "signal": "SIGTERM",
   "env": {
     "NODE_OPTIONS": "--trace-warnings"

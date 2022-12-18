@@ -35,7 +35,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
       displayName,
       this.api.hap.uuid.generate(id),
     )
-    accessory.context = device.toObject()
+    accessory.context = device.getAttributes()
     if (!this.accessories.has(id)) {
       this.log(`Initializing new accessory ${ id } with name ${ displayName }...`)
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])

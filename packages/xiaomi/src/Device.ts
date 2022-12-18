@@ -3,7 +3,7 @@ import { BaseDevice } from '@homeiot/shared'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
-  private static callAutoIncrementId = ~~(Math.random() * 10000)
+  private static requestAutoIncrementId = 0
 
   // Device ID ("did")
   public readonly id: number
@@ -92,8 +92,9 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params?: Record<string, any>): Promise<any> {
-    const id = ++Device.callAutoIncrementId
-    return this.send(
+    const id = String(++Device.requestAutoIncrementId)
+    return this.request(
+      id,
       this.encrypt(
         Buffer.from(
           JSON.stringify({ id, method, params }),

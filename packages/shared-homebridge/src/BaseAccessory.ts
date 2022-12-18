@@ -9,7 +9,6 @@ export abstract class BaseAccessory extends EventEmitter {
   constructor(
     public readonly platform: BasePlatform,
     public readonly platformAccessory: PlatformAccessory,
-    public attributes: Record<string, any> = {},
   ) {
     super()
     this.serviceClass = platform.serviceClass
@@ -20,20 +19,10 @@ export abstract class BaseAccessory extends EventEmitter {
       .getCharacteristic(this.characteristicClass.ConfiguredName)
       .on('set', (value, callback) => {
         const name = value.toString()
-        this.setAttribute('name', name)
         this.setInfo({ name })
         this.platform.api.updatePlatformAccessories([this.platformAccessory])
         callback()
       })
-  }
-
-  public setAttribute(key: string, value: any) {
-    this.attributes[key] = value
-    this.emit('setAttribute', key, value)
-  }
-
-  public getAttribute(key: string) {
-    return this.attributes[key]
   }
 
   public getOrAddService<T extends WithUUID<typeof Service>>(Klass: T): Service {

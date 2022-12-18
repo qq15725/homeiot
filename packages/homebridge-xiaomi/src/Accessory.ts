@@ -9,6 +9,6 @@ export class Accessory extends BaseAccessory {
     platformAccessory: PlatformAccessory,
     public readonly device: Device,
   ) {
-    super(platform, platformAccessory, {})
+    super(platform, platformAccessory)
   }
 }

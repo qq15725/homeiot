@@ -4,9 +4,16 @@ import { EventEmitter } from './EventEmitter'
 import type { SocketConstructorOpts } from 'node:net'
 import type { Socket as UdpSocket } from 'node:dgram'
 
+export interface WaitingRequest {
+  resolve: any
+  reject: any
+  timeoutTimer: any
+}
+
 export abstract class BaseDevice extends EventEmitter {
-  private readonly _promises = new Map<string | number, { timeout: any; resolve: any; reject: any }>()
   private _socket?: TcpSocket | UdpSocket
+  private readonly _waitingRequests = new Map<string, WaitingRequest>()
+  private readonly _attributes = new Map<string | number, any>()
 
   constructor(
     public readonly host: string,
@@ -20,6 +27,29 @@ export abstract class BaseDevice extends EventEmitter {
     super()
   }
 
+  public hasAttribute(key: string) {
+    return this._attributes.has(key)
+  }
+
+  public setAttribute(key: string, value: any) {
+    this._attributes.set(key, value)
+  }
+
+  public getAttribute(key: string) {
+    return this._attributes.get(key)
+  }
+
+  public setAttributes(attributes: Record<string, any>) {
+    this._attributes.clear()
+    for (const [key, value] of Object.entries(attributes)) {
+      this._attributes.set(key, value)
+    }
+  }
+
+  public getAttributes() {
+    return Object.fromEntries(this._attributes)
+  }
+
   private _isTcpSocket(socket: any): socket is TcpSocket {
     return (this._options?.type ?? 'tcp') === 'tcp' && Boolean(this._socket)
   }
@@ -28,25 +58,39 @@ export abstract class BaseDevice extends EventEmitter {
     return !this._isTcpSocket(this._socket) && Boolean(this._socket)
   }
 
-  protected setPromose(id: string | number, resolve: any, reject: any) {
-    this._promises.set(id, {
-      timeout: setTimeout(() => {
-        reject(new Error(`failed to send message ${ id }.`))
-        this._promises.delete(id)
-      }, 500),
-      resolve,
-      reject,
+  public request(id: string, data: string | Uint8Array): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.emit('request', data, id)
+
+      const timeoutTimer = setTimeout(() => {
+        reject(new Error(`Request timeout ${ id }`))
+        this._waitingRequests.delete(id)
+      }, 500)
+
+      this._waitingRequests.set(id, {
+        resolve: (res: any) => {
+          this.emit('response', res, id)
+          resolve(res)
+        },
+        reject,
+        timeoutTimer,
+      })
+
+      this.send(data).catch(err => {
+        this._waitingRequests.delete(id)
+        clearTimeout(timeoutTimer)
+        reject(err)
+      })
     })
-    return this
   }
 
-  protected pullPromise(id: string | number) {
-    const promise = this._promises.get(id)
-    if (promise) {
-      this._promises.delete(id)
-      clearTimeout(promise.timeout)
+  protected pullWaitingRequest(id: string) {
+    const waitingRequest = this._waitingRequests.get(id)
+    if (waitingRequest) {
+      this._waitingRequests.delete(id)
+      clearTimeout(waitingRequest.timeoutTimer)
     }
-    return promise
+    return waitingRequest
   }
 
   protected async waitForConnect() {
@@ -87,7 +131,7 @@ export abstract class BaseDevice extends EventEmitter {
               .on('error', err => this.emit('error', err))
               .on('close', () => this._socket = undefined)
               .on('data', this.onMessage.bind(this))
-            this.emit('connected')
+            this.emit('connect')
             resolve(this)
           }) as any
       } else {
@@ -110,38 +154,19 @@ export abstract class BaseDevice extends EventEmitter {
 
   protected abstract onMessage(data: Buffer): void
 
-  public send(str: string | Uint8Array): Promise<void> {
-    this.emit('send', str)
+  public send(data: string | Uint8Array): Promise<void> {
     return new Promise((resolve, reject) => {
       this.connect().catch(reject).then(() => {
         const onError = (e?: Error | null) => e ? reject(e) : resolve()
         const socket = this._socket
         if (this._isTcpSocket(socket)) {
-          socket.write(str, onError)
+          socket.write(data, onError)
         } else if (this._isUdpSocket(socket)) {
-          socket.send(str, 0, str.length, this.port, this.host, onError)
+          socket.send(data, 0, data.length, this.port, this.host, onError)
         } else {
           reject(new Error('Socket is closed'))
         }
       })
     })
-  }
-
-  protected setObject(object: Record<string, any>) {
-    for (const key of Object.getOwnPropertyNames(this)) {
-      if (!key.startsWith('_') && object[key] !== undefined) {
-        (this as any)[key] = object[key]
-      }
-    }
-  }
-
-  public toObject() {
-    const object: Record<string, any> = {}
-    for (const key of Object.getOwnPropertyNames(this)) {
-      if (!key.startsWith('_') && (this as any)[key] !== undefined) {
-        object[key] = (this as any)[key]
-      }
-    }
-    return object
   }
 }

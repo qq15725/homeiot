@@ -15,7 +15,7 @@ export class Accessory extends BaseAccessory {
     platformAccessory: PlatformAccessory,
     public readonly device: Device,
   ) {
-    super(platform, platformAccessory, { ...device })
+    super(platform, platformAccessory)
     let name = device.displayName
     const count = (Accessory.nameCount.get(name) || 0) + 1
     Accessory.nameCount.set(name, count)
@@ -23,11 +23,10 @@ export class Accessory extends BaseAccessory {
 
     device
       .on('error', err => platform.log.error(err))
-      .on('connected', () => platform.log.debug(`Connect to ${ device.host }:${ device.port }`))
-      .on('send', (str: string) => platform.log.debug(str))
-      .on('updated', props => this.updateProps(props))
-
-    this.updateProps(device)
+      .on('connect', () => platform.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
+      .on('request', data => platform.log.debug('[request]', data))
+      .on('response', data => platform.log.debug('[response]', data))
+      .connect()
 
     this
       .setInfo({
@@ -37,61 +36,37 @@ export class Accessory extends BaseAccessory {
         serialNumber: device.id,
         firmwareRevision: device.fwVer,
       })
-      .on('setAttribute', async (key: string, value: any) => {
-        try {
-          switch (key) {
-            case 'power':
-              await device.setPower(value)
-              break
-            case 'hue':
-              await device.setHsv(value, this.getAttribute('sat'))
-              break
-            case 'sat':
-              await device.setHsv(this.getAttribute('hue'), value)
-              break
-            case 'bright':
-              await device.setBright(Math.max(value, 1))
-              break
-            case 'ct':
-              await device.setCtAbx(value)
-              break
-          }
-        } catch (e: any) {
-          platform.log.error(e)
-        }
-      })
 
-    const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
-    // const lightBulb = accessory.getService(Service.Lightbulb)
-    //   ?? accessory.addService(new Service.Lightbulb(name))
+    const lightBulb = this.platformAccessory.getService(this.serviceClass.Lightbulb)
+      ?? this.platformAccessory.addService(new this.serviceClass.Lightbulb(name))
 
     this.onCharacteristic(
       lightBulb.getCharacteristic(this.characteristicClass.On),
-      () => this.getAttribute('power') === 'on',
-      v => this.setAttribute('power', v ? 'on' : 'off'),
+      () => device.power === 'on',
+      val => device.power = val ? 'on' : 'off',
     )
 
     this.onCharacteristic(
       lightBulb.getCharacteristic(this.characteristicClass.Brightness),
-      () => this.getAttribute('bright'),
-      v => this.setAttribute('bright', v),
+      () => device.bright,
+      val => device.bright = val,
     )
 
-    if (device.supportsColor) {
+    if (device.supportColor) {
       this.onCharacteristic(
         lightBulb.getCharacteristic(this.characteristicClass.Hue),
-        () => this.getAttribute('hue'),
-        v => this.setAttribute('hue', v),
+        () => device.hue,
+        v => device.hue = v,
       )
 
       this.onCharacteristic(
         lightBulb.getCharacteristic(this.characteristicClass.Saturation),
-        () => this.getAttribute('sat'),
-        v => this.setAttribute('sat', v),
+        () => device.sat,
+        v => device.sat = v,
       )
     }
 
-    if (device.supportsColorTemperature) {
+    if (device.supportColorTemperature) {
       const characteristic = (
         lightBulb.getCharacteristic(this.characteristicClass.ColorTemperature)
         || lightBulb.addOptionalCharacteristic(this.characteristicClass.ColorTemperature)
@@ -99,13 +74,13 @@ export class Accessory extends BaseAccessory {
 
       this.onCharacteristic(
         characteristic,
-        () => convertColorTemperature(this.getAttribute('ct')),
-        v => this.setAttribute('ct', convertColorTemperature(v)),
+        () => convertColorTemperature(device.ct ?? 0),
+        v => device.ct = convertColorTemperature(v),
       )
 
       characteristic.setProps({
-        maxValue: convertColorTemperature(device.supportsColorTemperature.min),
-        minValue: convertColorTemperature(device.supportsColorTemperature.max),
+        maxValue: convertColorTemperature(device.supportColorTemperature.min),
+        minValue: convertColorTemperature(device.supportColorTemperature.max),
       })
     }
   }
@@ -114,7 +89,6 @@ export class Accessory extends BaseAccessory {
     const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
 
     for (const [key, value] of Object.entries(info)) {
-      this.attributes[key] = value
       switch (key) {
         case 'power':
           lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')

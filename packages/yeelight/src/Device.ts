@@ -10,53 +10,159 @@ import type {
 } from './types'
 
 export class Device extends BaseDevice {
-  private static autoIncrementId = ~~(Math.random() * 10000)
-  private static callAutoIncrementId = ~~(Math.random() * 10000)
+  private static requestAutoIncrementId = 0
 
-  // TCP
-  public from?: 'response' | 'notify' | string
-
-  // Message
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
   public readonly id: string
-  // field contains the service access point of the smart LED deivce.
-  // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
-  public location?: string
+
   // The product model of a Yeelight smart device. Current it can be "mono", "color", “stripe”, “ceiling”, “bslamp”. For "mono", it represents device that only supports brightness adjustment.
   // For "color", it represents device that support both color and color temperature adjustment.
   // “Stripe” stands for Yeelight smart LED stripe.
   // “Ceiling” stands for Yeelight Ceiling Light.
   // More values may be added in future.
-  public model?: DeviceProductModel
+  public readonly model?: DeviceProductModel
+
+  // Model name
+  public readonly modelName?: string
+  // Support color temperature
+  public readonly supportColorTemperature: false | { min: number; max: number }
+  // Support night light
+  public readonly supportNightLight: boolean
+  // Support background light
+  public readonly supportBackgroundLight: boolean
+  // Support color
+  public readonly supportColor: boolean
+
+  // TCP
+  public get from(): 'response' | 'notify' | string | undefined {
+    return this.getAttribute('from')
+  }
+
+  // field contains the service access point of the smart LED deivce.
+  // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
+  public get location(): string | undefined {
+    return this.getAttribute('location')
+  }
+
   // LED device's firmware version.
-  public fwVer?: string
+  public get fwVer(): string | undefined {
+    return this.getAttribute('fwVer')
+  }
+
   // All the supported control methods separated by white space.
   // 3Rd party device can use this field to dynamically render the control view to user if necessary.
   // Any control request that invokes method that is not included in this field will be rejected by smart LED
-  public support?: DeviceSupportedMethods
+  public get support(): DeviceSupportedMethods | undefined {
+    return this.getAttribute('support')
+  }
 
   // Props
+
   // on: smart LED is turned on / off: smart LED is turned off
-  public power?: 'on' | 'off'
+  public get power(): 'on' | 'off' | undefined {
+    return this.getAttribute('power')
+  }
+
+  public set power(value) {
+    if (value === undefined) {
+      this.setAttribute('power', value)
+    } else if (this.power !== value) {
+      this.setPower(value)
+        .then(() => this.setAttribute('power', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // Brightness percentage. Range 1 ~ 100
   // Brightness percentage. Range 1 ~ 100
-  public bright?: number
+  public get bright(): number | undefined {
+    return this.getAttribute('bright')
+  }
+
+  public set bright(value) {
+    if (value === undefined) {
+      this.setAttribute('bright', value)
+    } else if (this.bright !== value) {
+      this.setBright(value)
+        .then(() => this.setAttribute('bright', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // Color temperature. Range 1700 ~ 6500(k)
   // This field is only valid if COLOR_MODE is 2.
-  public ct?: number
+  public get ct(): number | undefined {
+    return this.getAttribute('ct')
+  }
+
+  public set ct(value) {
+    if (value === undefined) {
+      this.setAttribute('ct', value)
+    } else if (this.ct !== value) {
+      this.setCtAbx(value)
+        .then(() => this.setAttribute('ct', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // Color. Range 1 ~ 16777215
   // The field is only valid if COLOR_MODE is 1.
-  public rgb?: number
+  public get rgb(): number | undefined {
+    return this.getAttribute('rgb')
+  }
+
+  public set rgb(value) {
+    if (value === undefined) {
+      this.setAttribute('rgb', value)
+    } else if (this.rgb !== value) {
+      this.setRgb(value)
+        .then(() => this.setAttribute('rgb', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // Hue. Range 0 ~ 359
   // This field is only valid if COLOR_MODE is 3.
-  public hue?: number
+  public get hue(): number | undefined {
+    return this.getAttribute('hue')
+  }
+
+  public set hue(value) {
+    if (value === undefined) {
+      this.setAttribute('hue', value)
+    } else if (this.hue !== value && this.sat && value) {
+      this.setHsv(value, this.sat)
+        .then(() => this.setAttribute('hue', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // Saturation. Range 0 ~ 100
   // The field is only valid if COLOR_MODE is 3.
-  public sat?: number
+  public get sat(): number | undefined {
+    return this.getAttribute('sat')
+  }
+
+  public set sat(value) {
+    if (value === undefined) {
+      this.setAttribute('sat', value)
+    } else if (this.sat !== value && this.hue && value) {
+      this.setHsv(this.hue, value)
+        .then(() => this.setAttribute('sat', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode
-  public colorMode?: 1 | 2 | 3
+  public get colorMode(): 1 | 2 | 3 | undefined {
+    return this.getAttribute('colorMode')
+  }
+
   // 0: no flow is running / 1:color flow is running
-  public flowing?: 0 | 1
+  public get flowing(): 0 | 1 | undefined {
+    return this.getAttribute('flowing')
+  }
+
   // The remaining time of a sleep timer. Range 1 ~ 60 (minutes)
   public delayoff?: number
   // Current flow parameters (only meaningful when 'flowing' is 1)
@@ -66,7 +172,10 @@ export class Device extends BaseDevice {
   // Name of the device. User can use “set_name” to store the name on the device.
   // The maximum length is 64 bytes.
   // If none-ASCII character is used, it is suggested to BASE64 the name first and then use “set_name” to store it on device.
-  public name?: string
+  public get name(): string | undefined {
+    return this.getAttribute('name')
+  }
+
   // Background light power status
   public bgPower?: 'on' | 'off'
   // Background light is flowingt
@@ -90,39 +199,29 @@ export class Device extends BaseDevice {
   // 0: daylight mode / 1: moonlight mode (ceiling light only)
   public activeMode?: 0 | 1
 
-  // Model
-  public modelName?: string
-  // Supports color temperature
-  public supportsColorTemperature: false | { min: number; max: number } = false
-  // Supports night light
-  public supportsNightLight = false
-  // Supports background light
-  public supportsBackgroundLight = false
-  // Supports color
-  public supportsColor = false
-
   public get displayName(): string {
     return this.name || this.modelName || this.model || 'unknown'
   }
 
   constructor(info: DeviceInfo) {
-    const { host, port, id, ...props } = info
+    const { host, port, id, model, ...props } = info
     super(host, port, { type: 'tcp' })
-    this.id = id ?? `id_${ ++Device.autoIncrementId }`
-    this.setObject({ ...props, ...parseModel(info.model, info.support) })
+    const parsedModel = parseModel(info.model, info.support)
+    this.id = id
+    this.model = model
+    this.modelName = parsedModel.modelName
+    this.supportColorTemperature = parsedModel.supportColorTemperature as any
+    this.supportNightLight = parsedModel.supportNightLight
+    this.supportBackgroundLight = parsedModel.supportBackgroundLight
+    this.supportColor = parsedModel.supportColor
+    this.setAttributes(props)
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const id = ++Device.callAutoIncrementId
-      this
-        .setPromose(id, resolve, reject)
-        .send(JSON.stringify({ id, method, params }) + EOL)
-        .catch(e => {
-          reject(e)
-          this.pullPromise(id)
-        })
-    })
+    const id = ++Device.requestAutoIncrementId
+    return this
+      .request(String(id), JSON.stringify({ id, method, params }) + EOL)
+      .then(val => val.result)
   }
 
   public onMessage(data: Buffer) {
@@ -132,20 +231,20 @@ export class Device extends BaseDevice {
         && 'params' in message
         && message.method === 'props'
       ) {
-        this.emit('updated', message.params)
+        this.emit('update:props', message.params)
       } else if (
         'id' in message
         && 'result' in message
         && Array.isArray(message.result)
       ) {
-        this.pullPromise(message.id)?.resolve(message.result)
+        this.pullWaitingRequest(String(message.id))?.resolve(message)
       } else if (
         'id' in message
         && 'error' in message
         && 'code' in message.error
         && 'message' in message.error
       ) {
-        this.pullPromise(message.id)?.reject(message.error.message)
+        this.pullWaitingRequest(String(message.id))?.reject(message.error.message)
       }
     }
   }
