@@ -47,7 +47,11 @@ export abstract class BaseDevice extends EventEmitter {
   }
 
   public getAttributes() {
-    return Object.fromEntries(this._attributes)
+    return {
+      ...Object.fromEntries(this._attributes),
+      host: this.host,
+      port: this.port,
+    }
   }
 
   private _isTcpSocket(socket: any): socket is TcpSocket {
@@ -117,7 +121,6 @@ export abstract class BaseDevice extends EventEmitter {
         const onConnectTimeout = () => socket.destroy(new Error('Socket connect timeout'))
         const onConnectError = reject
         this._socket = socket
-          .connect(this.port, this.host)
           .setTimeout(3000)
           .once('timeout', onConnectTimeout)
           .once('error', onConnectError)
@@ -129,30 +132,31 @@ export abstract class BaseDevice extends EventEmitter {
               .setEncoding(this._options?.encoding ?? 'utf8')
               .setTimeout(this._options?.timeout ?? 3000)
               .on('error', err => this.emit('error', err))
-              .on('close', () => this._socket = undefined)
+              .once('close', () => this._socket = undefined)
               .on('data', this.onMessage.bind(this))
             this.emit('connect')
             resolve(this)
-          }) as any
+          })
+          .connect(this.port, this.host)
       } else {
         if (this._isUdpSocket(socketRaw)) {
           return resolve(this)
         }
-        this._socket = createUdpSocket({
-          type,
-          reuseAddr: true,
-        })
-          .bind(this.port)
+        this._socket = createUdpSocket({ type, reuseAddr: true })
+          .on('error', err => this.emit('error', err))
           .once('close', () => this._socket = undefined)
-          .on('error', () => {})
           .on('message', this.onMessage.bind(this))
-          .on('listening', () => {})
-          .on('connect', () => {}) as any
+          .on('listening', () => {
+            this.emit('listening')
+            resolve(this)
+          })
+          .on('connect', () => this.emit('connect'))
+          .bind(this.port)
       }
     })
   }
 
-  protected abstract onMessage(data: Buffer): void
+  protected abstract onMessage(message: Buffer): void
 
   public send(data: string | Uint8Array): Promise<void> {
     return new Promise((resolve, reject) => {

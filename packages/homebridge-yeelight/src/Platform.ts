@@ -30,6 +30,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
 
   protected onDidDiscoverDevice(device: Device) {
     const { id, displayName } = device
+    if (!id) return
     // eslint-disable-next-line new-cap
     const accessory = new this.api.platformAccessory(
       displayName,

@@ -289,11 +289,18 @@ export class Api {
     dids?: string[]
   }): Promise<Record<string, any>[]> {
     return this.request('/home/device_list', {
-      getVirtualModel: false,
-      getHuamiDevices: 0,
+      getVirtualModel: true,
+      getHuamiDevices: 1,
       get_split_device: false,
       support_smart_home: true,
       ...options,
     }).then(result => result.list)
+  }
+
+  public getHomes(options?: { fetch_share_dev?: boolean }): Promise<Record<string, any>[]> {
+    return this.request('/homeroom/gethome', {
+      fetch_share_dev: false,
+      ...options,
+    }).then(result => result.homelist)
   }
 }

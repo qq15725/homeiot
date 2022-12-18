@@ -29,14 +29,11 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
   }
 
   protected onDidDiscoverDevice(device: Device) {
-    const id = this.getId(device)
-    if (!id) return
+    const id = String(device.id)
+    if (!this.config.tokens[id]) return
     // eslint-disable-next-line new-cap
-    const accessory = new this.api.platformAccessory(
-      String(id),
-      this.api.hap.uuid.generate(id),
-    )
-    accessory.context = { ...device }
+    const accessory = new this.api.platformAccessory(id, this.api.hap.uuid.generate(id))
+    accessory.context = device.getAttributes()
     if (!this.accessories.has(id)) {
       this.log(`Initializing new accessory ${ id } with name ${ id }...`)
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
@@ -51,7 +48,13 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     if (this.accessories.has(id)) {
       //
     } else {
-      this.accessories.set(id, new Accessory(this, accessory, new Device({ ...context } as any)))
+      const device = new Device({ ...context } as any)
+      if (!device.token) {
+        const token = this.config.tokens[id]
+        if (!token) return
+        device.setToken(token)
+      }
+      this.accessories.set(id, new Accessory(this, accessory, device))
     }
   }
 }

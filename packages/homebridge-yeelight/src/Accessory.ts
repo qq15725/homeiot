@@ -74,7 +74,7 @@ export class Accessory extends BaseAccessory {
 
       this.onCharacteristic(
         characteristic,
-        () => convertColorTemperature(device.ct ?? 0),
+        () => device.ct ? convertColorTemperature(device.ct) : undefined,
         v => device.ct = convertColorTemperature(v),
       )
 

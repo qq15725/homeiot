@@ -76,4 +76,8 @@ export abstract class BaseAccessory extends EventEmitter {
         }
       })
   }
+
+  public save() {
+    this.platform.api.updatePlatformAccessories([this.platformAccessory])
+  }
 }

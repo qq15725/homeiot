@@ -226,27 +226,32 @@ export class Device extends BaseDevice {
       .then(val => val.result)
   }
 
-  public onMessage(data: Buffer) {
-    for (const message of data.toString().split(EOL).filter(Boolean).map(v => JSON.parse(v))) {
+  public onMessage(message: Buffer) {
+    const items = message
+      .toString()
+      .split(EOL)
+      .filter(Boolean)
+      .map(v => JSON.parse(v))
+
+    for (const data of items) {
       if (
-        'method' in message
-        && 'params' in message
-        && message.method === 'props'
+        'method' in data
+        && 'params' in data
+        && data.method === 'props'
       ) {
-        this.emit('update:props', message.params)
+        this.emit('update:props', data.params)
       } else if (
-        'id' in message
-        && 'result' in message
-        && Array.isArray(message.result)
+        'id' in data
+        && 'result' in data
       ) {
-        this.pullWaitingRequest(String(message.id))?.resolve(message)
+        this.pullWaitingRequest(String(data.id))?.resolve(data)
       } else if (
-        'id' in message
-        && 'error' in message
-        && 'code' in message.error
-        && 'message' in message.error
+        'id' in data
+        && 'error' in data
+        && 'code' in data.error
+        && 'message' in data.error
       ) {
-        this.pullWaitingRequest(String(message.id))?.reject(message.error.message)
+        this.pullWaitingRequest(String(data.id))?.reject(data.error.message)
       }
     }
   }
