@@ -6,25 +6,36 @@ export class Device extends BaseDevice {
   private static requestAutoIncrementId = 0
 
   // Device ID ("did")
-  public readonly id: number
-  public token?: string
+  public get id(): number {
+    return this.getAttribute('id')
+  }
+
+  public get token(): string | undefined {
+    return this.getAttribute('token')
+  }
+
   private tokenKey?: Buffer
   private tokenIv?: Buffer
-  public serverStamp?: number
-  public serverStampTime?: number
+
+  public get serverStamp(): number | undefined {
+    return this.getAttribute('serverStamp')
+  }
+
+  public get serverStampTime(): number | undefined {
+    return this.getAttribute('serverStampTime')
+  }
 
   constructor(info: DeviceInfo) {
-    const { host, port, id, token, ...props } = info
+    const { host, port, ...props } = info
     super(host, port, { type: 'udp4' })
-    this.id = id
-    token && this.setToken(token)
-    Object.assign(this, props)
+    this.setAttributes(props)
+    props.token && this.setToken(props.token)
   }
 
   public setToken(token: string) {
-    this.token = token
-    this.tokenKey = createHash('md5').update(this.token).digest()
-    this.tokenIv = createHash('md5').update(this.tokenKey).update(this.token).digest()
+    this.setAttribute('token', token)
+    this.tokenKey = createHash('md5').update(token).digest()
+    this.tokenIv = createHash('md5').update(this.tokenKey).update(token).digest()
   }
 
   /**
@@ -128,8 +139,8 @@ export class Device extends BaseDevice {
     ) return
 
     if (stamp > 0) {
-      this.serverStamp = stamp
-      this.serverStampTime = Date.now()
+      this.setAttribute('serverStamp', stamp)
+      this.setAttribute('serverStampTime', Date.now())
     }
 
     const decipher = createDecipheriv('aes-128-cbc', this.tokenKey, this.tokenIv)

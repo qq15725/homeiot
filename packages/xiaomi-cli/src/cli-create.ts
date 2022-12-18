@@ -27,7 +27,7 @@ export function createCli(
     .action(() => {
       new Discovery()
         .on('didFinishLaunching', () => consola.start('looking for local devices...'))
-        .on('didDiscoverDevice', device => consola.log(device))
+        .on('didDiscoverDevice', device => consola.log(device.getAttributes()))
         .start()
     })
 

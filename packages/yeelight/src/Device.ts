@@ -13,14 +13,18 @@ export class Device extends BaseDevice {
   private static requestAutoIncrementId = 0
 
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
-  public readonly id: string
+  public get id(): string | undefined {
+    return this.getAttribute('id')
+  }
 
   // The product model of a Yeelight smart device. Current it can be "mono", "color", “stripe”, “ceiling”, “bslamp”. For "mono", it represents device that only supports brightness adjustment.
   // For "color", it represents device that support both color and color temperature adjustment.
   // “Stripe” stands for Yeelight smart LED stripe.
   // “Ceiling” stands for Yeelight Ceiling Light.
   // More values may be added in future.
-  public readonly model?: DeviceProductModel
+  public get model(): DeviceProductModel | undefined {
+    return this.getAttribute('model')
+  }
 
   // Model name
   public readonly modelName?: string
@@ -204,11 +208,9 @@ export class Device extends BaseDevice {
   }
 
   constructor(info: DeviceInfo) {
-    const { host, port, id, model, ...props } = info
+    const { host, port, ...props } = info
     super(host, port, { type: 'tcp' })
     const parsedModel = parseModel(info.model, info.support)
-    this.id = id
-    this.model = model
     this.modelName = parsedModel.modelName
     this.supportColorTemperature = parsedModel.supportColorTemperature as any
     this.supportNightLight = parsedModel.supportNightLight
