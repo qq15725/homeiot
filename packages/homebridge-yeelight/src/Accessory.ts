@@ -22,8 +22,9 @@ export class Accessory extends BaseAccessory {
     if (count > 1) name = `${ name } ${ count }`
 
     device
+      .on('error', err => platform.log.error(err))
       .on('connected', () => platform.log.debug(`Connect to ${ device.host }:${ device.port }`))
-      .on('sended', (str: string) => platform.log.debug(str))
+      .on('send', (str: string) => platform.log.debug(str))
       .on('updated', props => this.updateProps(props))
 
     this.updateProps(device)

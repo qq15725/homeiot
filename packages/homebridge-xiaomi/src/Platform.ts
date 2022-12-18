@@ -16,31 +16,29 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
   }
 
   protected getId(context: any) {
-    return context.did ? String(context.did) : undefined
+    return context.id ? String(context.id) : undefined
   }
 
   protected onDidFinishLaunching() {
     new Discovery()
       .on('error', err => this.log.error(err))
-      .on('didFinishLaunching', () => this.log.debug('Discovery started'))
+      .on('didFinishLaunching', () => this.log.debug('Local discovery started'))
       .on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
-      .on('missingToken', remote => this.log.error(remote))
       .start()
       .catch(err => this.log.error(err))
   }
 
   protected onDidDiscoverDevice(device: Device) {
-    const { did } = device
     const id = this.getId(device)
     if (!id) return
     // eslint-disable-next-line new-cap
     const accessory = new this.api.platformAccessory(
-      String(did),
+      String(id),
       this.api.hap.uuid.generate(id),
     )
     accessory.context = { ...device }
     if (!this.accessories.has(id)) {
-      this.log(`Initializing new accessory ${ id } with name ${ did }...`)
+      this.log(`Initializing new accessory ${ id } with name ${ id }...`)
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
     }
     this.onDidDiscoverAccessory(accessory)

@@ -2,7 +2,6 @@ import { BaseDiscovery } from '@homeiot/shared'
 import { EOL, toCameCase } from './utils'
 import { Device } from './device'
 import type { BaseDiscoveryEvents } from '@homeiot/shared'
-import type { RemoteInfo } from 'node:dgram'
 
 export type DiscoveryEvents = BaseDiscoveryEvents & {
   didDiscoverDevice: (device: Device) => void
@@ -17,11 +16,10 @@ export class Discovery extends BaseDiscovery {
         'MAN: "ssdp:discover"',
         'ST: wifi_bulb',
       ].join(EOL),
-      { serverPort: 1982 },
     )
   }
 
-  protected onMessage(message: Buffer, remote: RemoteInfo) {
+  protected onMessage(message: Buffer) {
     const [firstLine, ...lines] = message.toString().split(EOL)
 
     if (
@@ -77,15 +75,10 @@ export class Discovery extends BaseDiscovery {
 
     const [host, port] = info.location.split('//')[1].split(':')
 
-    if (remote.address !== host || remote.port !== port) return
-
-    this.emit(
-      'didDiscoverDevice',
-      new Device({
-        ...info,
-        host,
-        port: Number(port),
-      }),
-    )
+    this.emit('didDiscoverDevice', new Device({
+      ...info,
+      host,
+      port: Number(port),
+    }))
   }
 }

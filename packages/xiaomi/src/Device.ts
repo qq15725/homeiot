@@ -1,31 +1,30 @@
 import { createCipheriv, createDecipheriv, createHash } from 'node:crypto'
 import { BaseDevice } from '@homeiot/shared'
-
-export interface DeviceInfo {
-  host: string
-  port: number
-  did: number
-  token: string
-  serverStamp: number
-  serverStampTime: number
-}
+import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
-  public serverStamp: number
-  public serverStampTime: number
-  public readonly did: number
-  public readonly token: string
-  public readonly tokenKey: Buffer
-  public readonly tokenIV: Buffer
+  private static callAutoIncrementId = ~~(Math.random() * 10000)
+
+  // Device ID ("did")
+  public readonly id: number
+  public token?: string
+  private tokenKey?: Buffer
+  private tokenIv?: Buffer
+  public serverStamp?: number
+  public serverStampTime?: number
 
   constructor(info: DeviceInfo) {
-    super(info.host, info.port, { type: 'udp4' })
-    this.did = info.did
-    this.token = info.token
+    const { host, port, id, token, ...props } = info
+    super(host, port, { type: 'udp4' })
+    this.id = id
+    token && this.setToken(token)
+    Object.assign(this, props)
+  }
+
+  public setToken(token: string) {
+    this.token = token
     this.tokenKey = createHash('md5').update(this.token).digest()
-    this.tokenIV = createHash('md5').update(this.tokenKey).update(this.token).digest()
-    this.serverStamp = info.serverStamp
-    this.serverStampTime = info.serverStampTime
+    this.tokenIv = createHash('md5').update(this.tokenKey).update(this.token).digest()
   }
 
   /**
@@ -47,11 +46,19 @@ export class Device extends BaseDevice {
    * |...............................................................|
    */
   protected encrypt(data: Buffer) {
+    if (
+      !this.token
+      || !this.tokenKey
+      || !this.tokenIv
+    ) {
+      throw new Error('asdsad')
+    }
+
     const header = Buffer.alloc(2 + 2 + 4 + 4 + 4 + 16)
     header.writeInt16BE(0x2131)
 
     // Encrypt the data
-    const cipher = createCipheriv('aes-128-cbc', this.tokenKey, this.tokenIV)
+    const cipher = createCipheriv('aes-128-cbc', this.tokenKey, this.tokenIv)
     const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
 
     // Set the length
@@ -69,7 +76,7 @@ export class Device extends BaseDevice {
     }
 
     // Device ID
-    header.writeUInt32BE(this.did!, 8)
+    header.writeUInt32BE(this.id, 8)
 
     // MD5 Checksum
     const digest
@@ -84,11 +91,12 @@ export class Device extends BaseDevice {
     return Buffer.concat([header, encrypted])
   }
 
-  public invoke(method: string, params?: Record<string, any>): Promise<any> {
+  public call(method: string, params?: Record<string, any>): Promise<any> {
+    const id = ++Device.callAutoIncrementId
     return this.send(
       this.encrypt(
         Buffer.from(
-          JSON.stringify({ id: 'uuid', method, params }),
+          JSON.stringify({ id, method, params }),
           'utf8',
         ),
       ),
@@ -96,6 +104,12 @@ export class Device extends BaseDevice {
   }
 
   protected onMessage(message: Buffer) {
+    if (
+      !this.token
+      || !this.tokenKey
+      || !this.tokenIv
+    ) return
+
     // const deviceId = message.readUInt32BE(8)
     const stamp = message.readUInt32BE(12)
     const checksum = message.subarray(16, 32)
@@ -117,7 +131,7 @@ export class Device extends BaseDevice {
       this.serverStampTime = Date.now()
     }
 
-    const decipher = createDecipheriv('aes-128-cbc', this.tokenKey, this.tokenIV)
+    const decipher = createDecipheriv('aes-128-cbc', this.tokenKey, this.tokenIv)
     const data = Buffer.concat([decipher.update(encrypted), decipher.final()])
 
     console.log(data)

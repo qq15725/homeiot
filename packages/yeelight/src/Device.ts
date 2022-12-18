@@ -10,14 +10,15 @@ import type {
 } from './types'
 
 export class Device extends BaseDevice {
-  private static callUUID = 0
+  private static autoIncrementId = ~~(Math.random() * 10000)
+  private static callAutoIncrementId = ~~(Math.random() * 10000)
 
   // TCP
   public from?: 'response' | 'notify' | string
 
   // Message
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
-  public id?: string
+  public readonly id: string
   // field contains the service access point of the smart LED deivce.
   // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
   public location?: string
@@ -89,11 +90,15 @@ export class Device extends BaseDevice {
   // 0: daylight mode / 1: moonlight mode (ceiling light only)
   public activeMode?: 0 | 1
 
-  // Model info
+  // Model
   public modelName?: string
+  // Supports color temperature
   public supportsColorTemperature: false | { min: number; max: number } = false
+  // Supports night light
   public supportsNightLight = false
+  // Supports background light
   public supportsBackgroundLight = false
+  // Supports color
   public supportsColor = false
 
   public get displayName(): string {
@@ -101,14 +106,15 @@ export class Device extends BaseDevice {
   }
 
   constructor(info: DeviceInfo) {
-    const { host, port, ...props } = info
+    const { host, port, id, ...props } = info
     super(host, port, { type: 'tcp' })
-    Object.assign(this, { ...props, ...parseModel(info.model, info.support) })
+    this.id = id ?? `id_${ ++Device.autoIncrementId }`
+    this.setObject({ ...props, ...parseModel(info.model, info.support) })
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
     return new Promise((resolve, reject) => {
-      const id = ++Device.callUUID
+      const id = ++Device.callAutoIncrementId
       this
         .setPromose(id, resolve, reject)
         .send(JSON.stringify({ id, method, params }) + EOL)

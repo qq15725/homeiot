@@ -9,5 +9,6 @@
     { "path": "packages/xiaomi" },
     { "path": "packages/xiaomi-cli" },
     { "path": "packages/yeelight" },
+    { "path": "packages/yeelight-cli" },
   ]
 }

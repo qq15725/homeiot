@@ -28,16 +28,14 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
       .catch(err => this.log.error(err))
   }
 
-  protected onDidDiscoverDevice(device: Record<string, any>) {
-    const { displayName } = device
-    const id = this.getId(device)
-    if (!id) return
+  protected onDidDiscoverDevice(device: Device) {
+    const { id, displayName } = device
     // eslint-disable-next-line new-cap
     const accessory = new this.api.platformAccessory(
       displayName,
       this.api.hap.uuid.generate(id),
     )
-    accessory.context = { ...device }
+    accessory.context = device.toObject()
     if (!this.accessories.has(id)) {
       this.log(`Initializing new accessory ${ id } with name ${ displayName }...`)
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])

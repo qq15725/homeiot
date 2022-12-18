@@ -4,14 +4,11 @@ import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { RemoteInfo } from 'node:dgram'
 
 export type DiscoveryEvents = BaseDiscoveryEvents & {
-  missingToken: (info: Record<string, any>, remote: RemoteInfo) => void
   didDiscoverDevice: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
-  constructor(
-    protected readonly didTokens: Record<number, string> = {},
-  ) {
+  constructor() {
     super(
       '255.255.255.255', 54321,
       /**
@@ -51,22 +48,16 @@ export class Discovery extends BaseDiscovery {
     if (!stamp || encrypted.length > 0) return
 
     const token = checksum.match(/^[fF0]+$/)
-      ? this.didTokens[deviceId]
-      : checksum
+      ? undefined
+      : checksum.toString()
 
-    const info = {
+    this.emit('didDiscoverDevice', new Device({
       host,
       port,
-      did: deviceId,
+      id: deviceId,
+      token,
       serverStamp: Number(stamp.toString()),
       serverStampTime: Date.now(),
-    }
-
-    if (!token) {
-      this.emit('missingToken', info, remote)
-      return
-    }
-
-    this.emit('didDiscoverDevice', new Device({ ...info, token }))
+    }))
   }
 }

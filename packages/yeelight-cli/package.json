@@ -1,0 +1,49 @@
+{
+  "name": "@homeiot/yeelight-cli",
+  "version": "0.0.1",
+  "packageManager": "pnpm@7.9.0",
+  "description": "",
+  "author": "wxm",
+  "license": "MIT",
+  "homepage": "https://github.com/qq15725/homeiot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qq15725/homeiot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/qq15725/homeiot/issues"
+  },
+  "engines": {
+    "node": ">=14.18.1"
+  },
+  "keywords": [],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "yeelight": "./bin/yeelight.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "stub": "unbuild --stub",
+    "build": "unbuild",
+    "yeelight": "node ./bin/yeelight.mjs"
+  },
+  "dependencies": {
+    "@homeiot/yeelight": "workspace:*",
+    "cac": "^6.7.14",
+    "consola": "^2.15.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
