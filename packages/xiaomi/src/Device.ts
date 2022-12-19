@@ -106,17 +106,17 @@ export class Device extends BaseDevice {
     return this.call('miIO.info')
   }
 
-  public getProperties(params: any[]) {
-    return this.call('get_properties', params)
-  }
-
-  public setProperties(params: any[]) {
-    return this.call('set_properties', params)
-  }
-
-  public action(param: any) {
-    return this.call('action', param)
-  }
-
   // miot
+
+  public getProperties(params: { siid: number; piid: number }[]) {
+    return this.call('get_properties', params.map(param => ({ ...param, did: this.id })))
+  }
+
+  public setProperties(params: { siid: number; piid: number; value: any }[]) {
+    return this.call('set_properties', params.map(param => ({ ...param, did: this.id })))
+  }
+
+  public action(param: { siid: number; aiid: number; in: any[] }) {
+    return this.call('action', { ...param, did: this.id })
+  }
 }

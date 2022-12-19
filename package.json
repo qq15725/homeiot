@@ -9,7 +9,7 @@
     "homebridge:dev": "nodemon",
     "lint": "eslint .",
     "publish": "pnpm -r publish",
-    "miot": "pnpm -F @homeiot/xiaomi-cli miot",
+    "xiaomi": "pnpm -F @homeiot/xiaomi-cli xiaomi",
     "yeelight": "pnpm -F @homeiot/yeelight-cli yeelight",
     "release": "bumpp package.json packages/*/package.json --commit \"chore(release): publish v%s\" --push --tag"
   },
