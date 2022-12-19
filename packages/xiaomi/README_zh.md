@@ -48,15 +48,17 @@ new Api('xiaomi-user-name', 'password')
 
 ## 官方文档
 
-### Miot binary Protocol
+### miIO 二进制协议
 
 [Xiaomi Mi Home Binary Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
 
-### Miot spec v2
+### MIoT 规范
 
-- [actions](http://miot-spec.org/miot-spec-v2/spec/actions)
-- [devices](http://miot-spec.org/miot-spec-v2/spec/devices)
-- [events](http://miot-spec.org/miot-spec-v2/spec/events)
-- [services](http://miot-spec.org/miot-spec-v2/spec/services)
-- [properties](http://miot-spec.org/miot-spec-v2/spec/properties)
-- [instances](http://miot-spec.org/miot-spec-v2/instances?status=all)
+[MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)
+
+- [所有设备](http://miot-spec.org/miot-spec-v2/spec/devices)
+- [所有服务](http://miot-spec.org/miot-spec-v2/spec/services)
+- [所有属性](http://miot-spec.org/miot-spec-v2/spec/properties)
+- [所有动作](http://miot-spec.org/miot-spec-v2/spec/actions)
+- [所有事件](http://miot-spec.org/miot-spec-v2/spec/events)
+- [所有实例](http://miot-spec.org/miot-spec-v2/instances?status=all)
