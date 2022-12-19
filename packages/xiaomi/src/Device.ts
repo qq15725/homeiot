@@ -3,8 +3,6 @@ import { decodePacket, encodePacket } from './miio'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
-  private static requestAutoIncrementId = 0
-
   // Device ID ("did")
   public get id(): number {
     return this.getAttribute('id')
@@ -26,20 +24,6 @@ export class Device extends BaseDevice {
     return this.getAttribute('serverStampTime')
   }
 
-  public get power(): 'on' | 'off' | undefined {
-    return this.getAttribute('power')
-  }
-
-  public set power(value) {
-    if (value === undefined) {
-      this.setAttribute('power', value)
-    } else if (this.power !== value) {
-      this.call('set_power', [value])
-        .then(() => this.setAttribute('power', value))
-        .catch(err => this.emit('error', err))
-    }
-  }
-
   constructor(info: DeviceInfo) {
     const { host, port, ...props } = info
     super(host, port, { type: 'udp4' })
@@ -52,7 +36,7 @@ export class Device extends BaseDevice {
     }
 
     try {
-      const id = ++Device.requestAutoIncrementId
+      const id = this.getNextIncrementId()
       return this.request(
         String(id),
         encodePacket(
@@ -84,29 +68,27 @@ export class Device extends BaseDevice {
     if (!data.decrypted) return
 
     const message = JSON.parse(data.decrypted)
+    const id = String(message.id)
 
-    if (
-      'id' in message
-      && 'result' in message
-    ) {
-      this.pullWaitingRequest(String(message.id))?.resolve(message)
+    if ('id' in message && 'result' in message) {
+      this.pullWaitingRequest(id)?.resolve(message)
     } else if (
       'id' in message
       && 'error' in message
       && 'code' in message.error
       && 'message' in message.error
     ) {
-      this.pullWaitingRequest(String(message.id))?.reject(message.error.message)
+      this.pullWaitingRequest(id)?.reject(message.error.message)
     }
   }
 
-  // miio
+  // miio local protocal
 
   public miIoInfo() {
     return this.call('miIO.info')
   }
 
-  // miot
+  // miot local protocal
 
   public getProperties(params: { siid: number; piid: number }[]) {
     return this.call('get_properties', params.map(param => ({ ...param, did: this.id })))

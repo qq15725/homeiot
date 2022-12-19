@@ -2,14 +2,8 @@ import { createHash, createHmac, randomBytes } from 'node:crypto'
 import { stringify } from 'node:querystring'
 import fetch from 'node-fetch'
 import { CryptRC4, ResponseStatusError, randomString } from './utils'
+import type { CloudOptions } from './types'
 import type { Response } from 'node-fetch'
-
-export interface CloudOptions {
-  username: string
-  password: string
-  country?: 'ru' | 'us' | 'tw' | 'sg' | 'cn' | 'de' | 'in' | 'i2' | string
-  locale?: 'cn' | 'de' | 'i2' | 'ru' | 'sg' | 'us' | string
-}
 
 export class Cloud {
   protected useEncryptRequest = true
@@ -200,13 +194,15 @@ export class Cloud {
     return this.request(`/home/rpc/${ deviceId }`, { method, params })
   }
 
-  public getDevices(options?: {
-    getVirtualModel?: boolean
-    getHuamiDevices?: 0 | 1
-    get_split_device?: boolean
-    support_smart_home?: boolean
-    dids?: string[]
-  }): Promise<Record<string, any>[]> {
+  public getDevices(
+    options?: {
+      getVirtualModel?: boolean
+      getHuamiDevices?: 0 | 1
+      get_split_device?: boolean
+      support_smart_home?: boolean
+      dids?: string[]
+    },
+  ): Promise<Record<string, any>[]> {
     return this.request('/home/device_list', {
       getVirtualModel: true,
       getHuamiDevices: 1,

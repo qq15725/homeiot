@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash } from 'node:crypto'
+import type { DecodedPacket } from './types'
 
 const cache = new Map<string, { key: string; iv: string }>()
 
@@ -106,16 +107,8 @@ export function encodePacket(
   return Buffer.concat([header, encrypted])
 }
 
-interface DecodedData {
-  deviceId: number
-  stamp: number
-  checksum: Buffer
-  encrypted: Buffer
-  decrypted?: string
-}
-
-export function decodePacket(packet: Buffer, token?: string): DecodedData {
-  const data: DecodedData = {
+export function decodePacket(packet: Buffer, token?: string): DecodedPacket {
+  const data: DecodedPacket = {
     deviceId: packet.readUInt32BE(8),
     stamp: packet.readUInt32BE(12),
     checksum: packet.subarray(16, 32),

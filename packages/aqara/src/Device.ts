@@ -54,8 +54,7 @@ export class Device extends BaseDevice {
       short_id: this.shortId,
     }
     if (params) payload.data = JSON.stringify(params)
-    const id = this.uuid(cmd)
-    return this.request(id, JSON.stringify(payload))
+    return this.request(this.uuid(cmd), JSON.stringify(payload))
   }
 
   public write = (props: Record<string, any>): Promise<Record<string, any>> => this.call('write', { ...props, key: this.generateKey() })

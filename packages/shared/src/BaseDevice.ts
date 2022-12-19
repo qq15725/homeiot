@@ -11,6 +11,7 @@ export interface WaitingRequest {
 }
 
 export abstract class BaseDevice extends EventEmitter {
+  private static _autoIncrementId = 0
   private _socket?: TcpSocket | UdpSocket
   private readonly _waitingRequests = new Map<string, WaitingRequest>()
   private readonly _attributes = new Map<string | number, any>()
@@ -62,18 +63,22 @@ export abstract class BaseDevice extends EventEmitter {
     return !this._isTcpSocket(this._socket) && Boolean(this._socket)
   }
 
-  public request(id: string, data: string | Uint8Array): Promise<any> {
+  public getNextIncrementId(): number {
+    return ++BaseDevice._autoIncrementId
+  }
+
+  public request(uuid: string, data: string | Uint8Array): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.emit('request', data, id)
+      this.emit('request', data, uuid)
 
       const timeoutTimer = setTimeout(() => {
-        reject(new Error(`Request timeout ${ id }`))
-        this._waitingRequests.delete(id)
+        reject(new Error(`Request timeout ${ uuid }`))
+        this._waitingRequests.delete(uuid)
       }, 500)
 
-      this._waitingRequests.set(id, {
+      this._waitingRequests.set(uuid, {
         resolve: (res: any) => {
-          this.emit('response', res, id)
+          this.emit('response', res, uuid)
           resolve(res)
         },
         reject,
@@ -81,7 +86,7 @@ export abstract class BaseDevice extends EventEmitter {
       })
 
       this.send(data).catch(err => {
-        this._waitingRequests.delete(id)
+        this._waitingRequests.delete(uuid)
         clearTimeout(timeoutTimer)
         reject(err)
       })

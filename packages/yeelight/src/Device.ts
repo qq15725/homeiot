@@ -10,8 +10,6 @@ import type {
 } from './types'
 
 export class Device extends BaseDevice {
-  private static requestAutoIncrementId = 0
-
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
   public get id(): string | undefined {
     return this.getAttribute('id')
@@ -220,7 +218,7 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
-    const id = ++Device.requestAutoIncrementId
+    const id = this.getNextIncrementId()
     return this
       .request(String(id), JSON.stringify({ id, method, params }) + EOL)
       .then(val => val.result)
@@ -240,10 +238,7 @@ export class Device extends BaseDevice {
         && data.method === 'props'
       ) {
         this.emit('update:props', data.params)
-      } else if (
-        'id' in data
-        && 'result' in data
-      ) {
+      } else if ('id' in data && 'result' in data) {
         this.pullWaitingRequest(String(data.id))?.resolve(data)
       } else if (
         'id' in data
