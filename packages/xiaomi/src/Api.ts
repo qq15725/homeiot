@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes } from 'node:crypto'
 import { stringify } from 'node:querystring'
 import fetch from 'node-fetch'
+import { CryptRC4, randomString } from './utils'
 import type { Response } from 'node-fetch'
 
 export interface ApiOptions {
@@ -19,70 +20,9 @@ export class ApiResponseStatusError extends Error {
   }
 }
 
-function randomString({ length, charset }: { length: number; charset: string }) {
-  let result = ''
-  const charsetLen = charset.length
-  for (let i = 0; i < length; i++) {
-    result += charset.charAt(Math.floor(Math.random() * charsetLen))
-  }
-  return result
-}
-
-class CryptRC4 {
-  protected _ksa: number[]
-  protected _idx: number
-  protected _jdx: number
-
-  constructor(key: string | Buffer, rounds: number) {
-    const ksa = Array.from({ length: 256 }, (v, k) => k)
-    let i = 0
-    let j = 0
-    if (key.length > 0) {
-      key = Buffer.from(key)
-      const len = key.length
-      for (i = 0; i < 256; i++) {
-        j = (j + ksa[i] + key[i % len]) & 255;
-        [ksa[i], ksa[j]] = [ksa[j], ksa[i]]
-      }
-      i = j = 0
-      for (let c = 0; c < rounds; c++) {
-        i = (i + 1) & 255
-        j = (j + ksa[i]) & 255;
-        [ksa[i], ksa[j]] = [ksa[j], ksa[i]]
-      }
-    }
-    this._ksa = ksa
-    this._idx = i
-    this._jdx = j
-  }
-
-  crypt(data: Buffer) {
-    const ksa = (this._ksa || []).slice(0) // Array copy
-    let i = this._idx || 0
-    let j = this._jdx || 0
-    const len = data.length
-    const out = Buffer.alloc(len)
-    for (let c = 0; c < len; c++) {
-      i = (i + 1) & 255
-      j = (j + ksa[i]) & 255;
-      [ksa[i], ksa[j]] = [ksa[j], ksa[i]]
-      out[c] = data[c] ^ ksa[(ksa[i] + ksa[j]) & 255]
-    }
-    return out
-  }
-
-  encode(data: string) {
-    return this.crypt(Buffer.from(data, 'utf8')).toString('base64')
-  }
-
-  decode(data: string) {
-    return this.crypt(Buffer.from(data, 'base64')).toString('utf8')
-  }
-}
-
 export class Api {
   protected useEncryptRequest = true
-  protected readonly userAgent = `Android-7.1.1-1.0.0-ONEPLUS A3010-136-${ randomString({ length: 13, charset: 'ABCDEF' }) } APP/xiaomi.smarthome APPV/62830`
+  protected readonly userAgent = `Android-7.1.1-1.0.0-ONEPLUS A3010-136-${ randomString(13, 'ABCDEF') } APP/xiaomi.smarthome APPV/62830`
 
   // Auth
   protected authBaseURL = 'https://account.xiaomi.com/pass'

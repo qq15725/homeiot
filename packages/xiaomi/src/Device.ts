@@ -1,5 +1,5 @@
-import { createCipheriv, createDecipheriv, createHash } from 'node:crypto'
 import { BaseDevice } from '@homeiot/shared'
+import { decodePacket, encodePacket } from './miio'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
@@ -14,9 +14,9 @@ export class Device extends BaseDevice {
     return this.getAttribute('token')
   }
 
-  private tokenHex?: Buffer
-  private tokenKey?: Buffer
-  private tokenIv?: Buffer
+  public set token(value) {
+    this.setAttribute('token', value)
+  }
 
   public get serverStamp(): number | undefined {
     return this.getAttribute('serverStamp')
@@ -26,94 +26,42 @@ export class Device extends BaseDevice {
     return this.getAttribute('serverStampTime')
   }
 
+  public get power(): 'on' | 'off' | undefined {
+    return this.getAttribute('power')
+  }
+
+  public set power(value) {
+    if (value === undefined) {
+      this.setAttribute('power', value)
+    } else if (this.power !== value) {
+      this.call('set_power', [value])
+        .then(() => this.setAttribute('power', value))
+        .catch(err => this.emit('error', err))
+    }
+  }
+
   constructor(info: DeviceInfo) {
     const { host, port, ...props } = info
     super(host, port, { type: 'udp4' })
     this.setAttributes(props)
-    props.token && this.setToken(props.token)
   }
 
-  public setToken(token: string) {
-    this.setAttribute('token', token)
-    this.tokenHex = Buffer.from(token, 'hex')
-    this.tokenKey = createHash('md5').update(this.tokenHex).digest()
-    this.tokenIv = createHash('md5').update(this.tokenKey).update(this.tokenHex).digest()
-  }
-
-  /**
-   *  0                   1                   2                   3
-   *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-   * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   * | Magic number = 0x2131         | Packet Length (incl. header)  |
-   * |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
-   * | Unknown1                                                      |
-   * |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
-   * | Device ID ("did")                                             |
-   * |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
-   * | Stamp                                                         |
-   * |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
-   * | MD5 checksum                                                  |
-   * | ... or Device Token in response to the "Hello" packet         |
-   * |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
-   * | optional variable-sized data (encrypted)                      |
-   * |...............................................................|
-   */
-  protected encrypt(data: Buffer) {
-    if (
-      !this.tokenHex
-      || !this.tokenKey
-      || !this.tokenIv
-    ) {
-      throw new Error('Token is required to send commands')
+  public call(method: string, params: any = []): Promise<any> {
+    if (!this.token) {
+      return Promise.reject(new Error('Token is required to call method'))
     }
 
-    const header = Buffer.alloc(2 + 2 + 4 + 4 + 4 + 16)
-    header.writeInt16BE(0x2131)
-
-    // Encrypt the data
-    const cipher = createCipheriv('aes-128-cbc', this.tokenKey, this.tokenIv)
-    const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
-
-    // Set the length
-    header.writeUInt16BE(32 + encrypted.length, 2)
-
-    // Unknown
-    header.writeUInt32BE(0x00000000, 4)
-
-    // Stamp
-    if (this.serverStamp && this.serverStampTime) {
-      const secondsPassed = Math.floor((Date.now() - this.serverStampTime) / 1000)
-      header.writeUInt32BE(this.serverStamp + secondsPassed, 12)
-    } else {
-      header.writeUInt32BE(0xFFFFFFFF, 12)
-    }
-
-    // Device ID
-    header.writeUInt32BE(this.id, 8)
-
-    // MD5 Checksum
-    const digest
-      = createHash('md5')
-        .update(header.subarray(0, 16))
-        .update(this.tokenHex)
-        .update(encrypted)
-        .digest()
-
-    digest.copy(header, 16)
-
-    return Buffer.concat([header, encrypted])
-  }
-
-  public call(method: string, params: any[] = []): Promise<any> {
     try {
       const id = ++Device.requestAutoIncrementId
       return this.request(
         String(id),
-        this.encrypt(
-          Buffer.from(
-            JSON.stringify({ id, method, params }),
-            'utf8',
-          ),
+        encodePacket(
+          JSON.stringify({ id, method, params }),
+          this.id,
+          this.token,
+          this.serverStamp && this.serverStampTime
+            ? this.serverStamp + Math.floor((Date.now() - this.serverStampTime) / 1000)
+            : undefined,
         ),
       )
     } catch (err) {
@@ -121,54 +69,54 @@ export class Device extends BaseDevice {
     }
   }
 
-  protected onMessage(message: Buffer) {
-    if (
-      !this.tokenHex
-      || !this.tokenKey
-      || !this.tokenIv
-    ) return
+  protected onMessage(packet: Buffer) {
+    if (!this.token) return
 
-    // const deviceId = message.readUInt32BE(8)
-    const stamp = message.readUInt32BE(12)
-    const checksum = message.subarray(16, 32)
-    const encrypted = message.subarray(32)
+    const data = decodePacket(packet, this.token)
 
-    if (encrypted.length === 0) return
+    if (!data.encrypted.length) return
 
-    if (stamp > 0) {
-      this.setAttribute('serverStamp', stamp)
+    if (data.stamp > 0) {
+      this.setAttribute('serverStamp', data.stamp)
       this.setAttribute('serverStampTime', Date.now())
     }
 
-    if (
-      !checksum.equals(
-        createHash('md5')
-          .update(message.subarray(0, 16))
-          .update(this.tokenHex)
-          .update(encrypted)
-          .digest(),
-      )
-    ) return
+    if (!data.decrypted) return
 
-    const decipher = createDecipheriv('aes-128-cbc', this.tokenKey, this.tokenIv)
-    const data = JSON.parse(
-      Buffer
-        .concat([decipher.update(encrypted), decipher.final()])
-        .toString(),
-    )
+    const message = JSON.parse(data.decrypted)
 
     if (
-      'id' in data
-      && 'result' in data
+      'id' in message
+      && 'result' in message
     ) {
-      this.pullWaitingRequest(String(data.id))?.resolve(data)
+      this.pullWaitingRequest(String(message.id))?.resolve(message)
     } else if (
-      'id' in data
-      && 'error' in data
-      && 'code' in data.error
-      && 'message' in data.error
+      'id' in message
+      && 'error' in message
+      && 'code' in message.error
+      && 'message' in message.error
     ) {
-      this.pullWaitingRequest(String(data.id))?.reject(data.error.message)
+      this.pullWaitingRequest(String(message.id))?.reject(message.error.message)
     }
   }
+
+  // miio
+
+  public miIoInfo() {
+    return this.call('miIO.info')
+  }
+
+  public getProperties(params: any[]) {
+    return this.call('get_properties', params)
+  }
+
+  public setProperties(params: any[]) {
+    return this.call('set_properties', params)
+  }
+
+  public action(param: any) {
+    return this.call('action', param)
+  }
+
+  // miot
 }

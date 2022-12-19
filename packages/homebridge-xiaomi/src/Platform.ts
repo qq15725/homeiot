@@ -52,7 +52,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
       if (!device.token) {
         const token = this.config.tokens[id]
         if (!token) return
-        device.setToken(token)
+        device.token = token
       }
       this.accessories.set(id, new Accessory(this, accessory, device))
     }
