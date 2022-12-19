@@ -50,7 +50,7 @@ new Api('xiaomi-user-name', 'password')
 
 ### miIO Binary Protocol
 
-[Xiaomi Mi Home Binary Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
+[OpenMiHome/mihome-binary-protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
 
 ### MIoT Specification
 
