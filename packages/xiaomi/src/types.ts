@@ -60,6 +60,10 @@ export interface SpecificationType {
   version: number
 }
 
+export type InstanceProperties = Record<string, {
+  siid: number
+} & Property>
+
 // cloud
 
 export interface CloudOptions {

@@ -1,5 +1,5 @@
 import { cac } from 'cac'
-import { Cloud, Discovery, findInstance } from '@homeiot/xiaomi'
+import { Cloud, Discovery, findInstance, parseInstanceProperties } from '@homeiot/xiaomi'
 import consola from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput } from './password'
@@ -23,6 +23,24 @@ export function createCli(
     })
 
   cli
+    .command('call <method> [data]', 'Call device method')
+    .option('--ip [ip]', 'ip')
+    .option('--token [token]', 'token')
+    .action((method, data, options) => {
+      new Discovery()
+        .on('didDiscoverDevice', device => {
+          if (device.host === options.ip) {
+            device.token = options.token
+            device
+              .on('request', (data: any) => consola.log('[request]', data))
+              .on('response', (data: any) => consola.log('[response]', data))
+              .call(method, JSON.parse(data ?? '[]'))
+          }
+        })
+        .start()
+    })
+
+  cli
     .command('discover', 'List all devices from local discover')
     .action(() => {
       new Discovery()
@@ -35,7 +53,7 @@ export function createCli(
     .command('instance <model>', 'Find miot instance')
     .action((model) => {
       findInstance(model)
-        .then(consola.log)
+        .then(v => consola.log(parseInstanceProperties(v)))
     })
 
   cli

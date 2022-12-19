@@ -156,7 +156,7 @@ export abstract class BaseDevice extends EventEmitter {
             resolve(this)
           })
           .on('connect', () => this.emit('connect'))
-          .bind(this.port)
+          .bind()
       }
     })
   }

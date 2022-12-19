@@ -1,12 +1,12 @@
 import { createCipheriv, createDecipheriv, createHash } from 'node:crypto'
 import type { DecodedPacket } from './types'
 
-const cache = new Map<string, { key: string; iv: string }>()
+const cache = new Map<string, { key: Buffer; iv: Buffer }>()
 
 function getKeyAndIv(token: string) {
   if (cache.has(token)) return cache.get(token)!
-  const key = createHash('md5').update(token, 'hex').digest().toString()
-  const iv = createHash('md5').update(key).update(token, 'hex').digest().toString()
+  const key = createHash('md5').update(token, 'hex').digest()
+  const iv = createHash('md5').update(key).update(token, 'hex').digest()
   const res = { key, iv }
   cache.set(token, res)
   return res
@@ -120,7 +120,7 @@ export function decodePacket(packet: Buffer, token?: string): DecodedPacket {
 
   const digest = createHash('md5')
     .update(packet.subarray(0, 16))
-    .update(token)
+    .update(token, 'hex')
     .update(data.encrypted)
     .digest()
 

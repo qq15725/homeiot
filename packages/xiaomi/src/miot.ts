@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import { ResponseStatusError } from './utils'
-import type { Instance, Service, SpecificationType } from './types'
+import type { Instance, InstanceProperties, SpecificationType } from './types'
 import type { Response } from 'node-fetch'
 
 const httpGet = (url: string): Promise<Record<string, any>> => fetch(
@@ -32,23 +32,17 @@ export function parseSpecificationType(string: string): SpecificationType {
   } as any
 }
 
-export function isService(service: Service, type: string) {
-  const parsed = parseSpecificationType(service.type)
-  return parsed.type === 'service' && parsed.name === type
-}
-
-export function isLightService(service: Service) {
-  return isService(service, 'light')
-}
-
-export function isAirPurifierService(service: Service) {
-  return isService(service, 'air-purifier')
-}
-
-export function isAirFreshService(service: Service) {
-  return isService(service, 'air-fresh')
-}
-
-export function isFanService(service: Service) {
-  return isService(service, 'fan')
+export function parseInstanceProperties(instance: Instance): InstanceProperties {
+  const map: InstanceProperties = {}
+  instance.services.forEach(service => {
+    const { name: serviceName } = parseSpecificationType(service.type)
+    service.properties.forEach(property => {
+      const { name: propertyName } = parseSpecificationType(property.type)
+      map[`${ serviceName }.${ propertyName }`] = {
+        siid: service.iid,
+        ...property,
+      }
+    })
+  })
+  return map
 }

@@ -31,26 +31,28 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any = []): Promise<any> {
-    if (!this.token) {
-      return Promise.reject(new Error('Token is required to call method'))
-    }
-
     try {
       const id = this.getNextIncrementId()
-      return this.request(
-        String(id),
-        encodePacket(
-          JSON.stringify({ id, method, params }),
-          this.id,
-          this.token,
-          this.serverStamp && this.serverStampTime
-            ? this.serverStamp + Math.floor((Date.now() - this.serverStampTime) / 1000)
-            : undefined,
-        ),
-      )
+      return this.request(String(id), JSON.stringify({ id, method, params }))
     } catch (err) {
       return Promise.reject(err)
     }
+  }
+
+  public send(data: string) {
+    if (!this.token) {
+      return Promise.reject(new Error('Token is required to call method'))
+    }
+    return super.send(
+      encodePacket(
+        data,
+        this.id,
+        this.token,
+        this.serverStamp && this.serverStampTime
+          ? this.serverStamp + Math.floor((Date.now() - this.serverStampTime) / 1000)
+          : undefined,
+      ),
+    )
   }
 
   protected onMessage(packet: Buffer) {
