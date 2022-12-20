@@ -43,7 +43,7 @@ export class Device extends BaseDevice {
       return
     }
     const { cmd, data } = message
-    this.pullRequest(this.uuid(cmd))?.resolve(data)
+    this.getWaitingRequest(this.uuid(cmd))?.resolve(data)
   }
 
   public call(cmd: string, params?: Record<string, any>): Promise<any> {

@@ -239,14 +239,14 @@ export class Device extends BaseDevice {
       ) {
         this.emit('update:props', data.params)
       } else if ('id' in data && 'result' in data) {
-        this.pullRequest(String(data.id))?.resolve(data)
+        this.getWaitingRequest(String(data.id))?.resolve(data)
       } else if (
         'id' in data
         && 'error' in data
         && 'code' in data.error
         && 'message' in data.error
       ) {
-        this.pullRequest(String(data.id))?.reject(data.error.message)
+        this.getWaitingRequest(String(data.id))?.reject(data.error.message)
       }
     }
   }

@@ -73,14 +73,14 @@ export class Device extends BaseDevice {
     const id = String(message.id)
 
     if ('id' in message && 'result' in message) {
-      this.pullRequest(id)?.resolve(message)
+      this.getWaitingRequest(id)?.resolve(message)
     } else if (
       'id' in message
       && 'error' in message
       && 'code' in message.error
       && 'message' in message.error
     ) {
-      this.pullRequest(id)?.reject(message.error.message)
+      this.getWaitingRequest(id)?.reject(message.error.message)
     }
   }
 

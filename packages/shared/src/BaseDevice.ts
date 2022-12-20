@@ -6,7 +6,6 @@ import type { SocketConstructorOpts } from 'node:net'
 export interface WaitingRequest {
   resolve: any
   reject: any
-  timeoutTimer: any
 }
 
 export abstract class BaseDevice extends EventEmitter {
@@ -114,44 +113,42 @@ export abstract class BaseDevice extends EventEmitter {
     })
   }
 
-  public generateId(): number {
-    return ++BaseDevice._autoIncrementId
-  }
+  public generateId = (): number => ++BaseDevice._autoIncrementId
 
   public request(uuid: string, data: string | Uint8Array): Promise<any> {
     this.emit('request', data, uuid)
 
+    let timer: any
+
+    const clear = () => {
+      this._waitingRequests.delete(uuid)
+      timer && clearTimeout(timer)
+    }
+
     return new Promise((resolve, reject) => {
-      const timeoutTimer = setTimeout(() => {
-        reject(new Error(`Request timeout ${ uuid }`))
-        this._waitingRequests.delete(uuid)
-      }, 500)
+      const onResolve = (res: any) => {
+        clear()
+        this.emit('response', res, uuid)
+        resolve(res)
+      }
+
+      const onReject = (err: any) => {
+        clear()
+        reject(err)
+      }
+
+      timer = setTimeout(() => onReject(new Error(`Request timeout ${ uuid }`)), 500)
 
       this._waitingRequests.set(uuid, {
-        resolve: (res: any) => {
-          this.emit('response', res, uuid)
-          resolve(res)
-        },
-        reject,
-        timeoutTimer,
+        resolve: onResolve,
+        reject: onReject,
       })
 
-      this.send(data).catch(err => {
-        this._waitingRequests.delete(uuid)
-        clearTimeout(timeoutTimer)
-        reject(err)
-      })
+      this.send(data).catch(onReject)
     })
   }
 
-  public pullRequest(uuid: string) {
-    const waitingRequest = this._waitingRequests.get(uuid)
-    if (waitingRequest) {
-      this._waitingRequests.delete(uuid)
-      clearTimeout(waitingRequest.timeoutTimer)
-    }
-    return waitingRequest
-  }
+  public getWaitingRequest = (uuid: string): WaitingRequest | undefined => this._waitingRequests.get(uuid)
 
   protected onMessage(_message: Buffer) {
     //
