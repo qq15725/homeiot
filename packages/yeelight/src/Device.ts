@@ -218,7 +218,7 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
-    const id = this.getNextIncrementId()
+    const id = this.generateId()
     return this
       .request(String(id), JSON.stringify({ id, method, params }) + EOL)
       .then(val => val.result)
@@ -239,14 +239,14 @@ export class Device extends BaseDevice {
       ) {
         this.emit('update:props', data.params)
       } else if ('id' in data && 'result' in data) {
-        this.pullWaitingRequest(String(data.id))?.resolve(data)
+        this.pullRequest(String(data.id))?.resolve(data)
       } else if (
         'id' in data
         && 'error' in data
         && 'code' in data.error
         && 'message' in data.error
       ) {
-        this.pullWaitingRequest(String(data.id))?.reject(data.error.message)
+        this.pullRequest(String(data.id))?.reject(data.error.message)
       }
     }
   }

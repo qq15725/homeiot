@@ -32,7 +32,7 @@ export class Device extends BaseDevice {
 
   public call(method: string, params: any = []): Promise<any> {
     try {
-      const id = this.getNextIncrementId()
+      const id = this.generateId()
       return this.request(String(id), JSON.stringify({ id, method, params }))
     } catch (err) {
       return Promise.reject(err)
@@ -73,14 +73,14 @@ export class Device extends BaseDevice {
     const id = String(message.id)
 
     if ('id' in message && 'result' in message) {
-      this.pullWaitingRequest(id)?.resolve(message)
+      this.pullRequest(id)?.resolve(message)
     } else if (
       'id' in message
       && 'error' in message
       && 'code' in message.error
       && 'message' in message.error
     ) {
-      this.pullWaitingRequest(id)?.reject(message.error.message)
+      this.pullRequest(id)?.reject(message.error.message)
     }
   }
 
