@@ -25,15 +25,15 @@ export class Device extends BaseDevice {
   }
 
   constructor(info: DeviceInfo) {
-    const { host, port, ...props } = info
-    super(host, port, { type: 'udp4' })
+    const { host, ...props } = info
+    super(host, 54321, { type: 'udp4' })
     this.setAttributes(props)
   }
 
-  public call(method: string, params: any = []): Promise<any> {
+  public call(method: string, params: any = [], options?: { deconnect: boolean }): Promise<any> {
     try {
       const id = this.generateId()
-      return this.request(String(id), JSON.stringify({ id, method, params }))
+      return this.request(String(id), JSON.stringify({ id, method, params }), options)
     } catch (err) {
       return Promise.reject(err)
     }

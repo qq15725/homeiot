@@ -3,12 +3,13 @@ import { Cloud, Discovery, findInstance, parseInstanceProperties } from '@homeio
 import consola from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput } from './password'
+import type { Device } from '@homeiot/xiaomi'
 
 export function createCli(
   input = process.stdin,
   output = process.stdout,
 ) {
-  const cli = cac('miot')
+  const cli = cac('xiaomi')
 
   cli
     .command('devices', 'List all devices from xiaomi cloud')
@@ -27,14 +28,16 @@ export function createCli(
     .option('--ip [ip]', 'ip')
     .option('--token [token]', 'token')
     .action((method, data, options) => {
-      new Discovery()
-        .on('didDiscoverDevice', device => {
+      const discovery = new Discovery()
+      discovery
+        .on('didDiscoverDevice', (device: Device) => {
           if (device.host === options.ip) {
+            discovery.stop()
             device.token = options.token
             device
               .on('request', (data: any) => consola.log('[request]', data))
-              .on('response', (data: any) => consola.log('[response]', data))
-              .call(method, JSON.parse(data ?? '[]'))
+              .on('response', (data: any) => consola.log('[response]', JSON.stringify(data)))
+              .call(method, JSON.parse(data ?? '[]'), { deconnect: true })
           }
         })
         .start()
@@ -44,8 +47,13 @@ export function createCli(
     .command('discover', 'List all devices from local discover')
     .action(() => {
       new Discovery()
-        .on('didFinishLaunching', () => consola.start('looking for local devices...'))
-        .on('didDiscoverDevice', device => consola.log(device.getAttributes()))
+        .on('didFinishLaunching', () => consola.start('discovering devices. press ctrl+c to stop.'))
+        .on('didDiscoverDevice', (device: Device) => {
+          consola.log(`
+Device ID: ${ device.id }
+Address: ${ device.host }
+Token: ${ device.token ?? 'Unknown' }`)
+        })
         .start()
     })
 

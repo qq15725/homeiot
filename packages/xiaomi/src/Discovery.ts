@@ -17,14 +17,13 @@ export class Discovery extends BaseDiscovery {
   }
 
   protected onMessage(packet: Buffer, remote: RemoteInfo) {
-    const { address: host, port } = remote
+    const { address: host } = remote
     const { deviceId, checksum, stamp, encrypted } = decodePacket(packet)
 
     if (!stamp || encrypted.length > 0) return
 
     this.emit('didDiscoverDevice', new Device({
       host,
-      port,
       id: deviceId,
       token: checksum.toString('hex').match(/^[fF0]+$/)
         ? undefined
