@@ -24,7 +24,7 @@ export class Discovery extends BaseDiscovery {
 
     this.emit('device', new Device({
       host,
-      id: deviceId,
+      id: String(deviceId),
       token: checksum.toString('hex').match(/^[fF0]+$/)
         ? undefined
         : checksum.toString(),

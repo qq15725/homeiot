@@ -15,10 +15,6 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
   }
 
-  protected getId(context: any) {
-    return context.id ? String(context.id) : undefined
-  }
-
   protected onDidFinishLaunching() {
     new Discovery()
       .on('error', err => this.log.error(err))
@@ -45,7 +41,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
 
   protected onDidDiscoverAccessory(accessory: PlatformAccessory) {
     const { context } = accessory
-    const id = this.getId(context)
+    const { id } = context
     if (!id) return
     if (this.accessories.has(id)) {
       this.accessories.get(id)?.updateProps(context)

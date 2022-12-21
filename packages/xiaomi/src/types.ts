@@ -1,7 +1,7 @@
 // local
 
 export interface DeviceInfo {
-  id: number
+  id: string
   host: string
   port?: number
   token?: string

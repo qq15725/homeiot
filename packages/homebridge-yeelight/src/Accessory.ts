@@ -23,10 +23,10 @@ export class Accessory extends BaseAccessory {
     if (count > 1) name = `${ name } ${ count }`
 
     device
-      .on('error', err => platform.log.error(err))
-      .on('start', () => platform.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
-      .on('request', data => platform.log.debug('[request]', data))
-      .on('response', data => platform.log.debug('[response]', data))
+      .on('error', err => this.log.error(err))
+      .on('start', () => this.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
+      .on('request', data => this.log.debug('[request]', data))
+      .on('response', data => this.log.debug('[response]', data))
 
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
     this.setCharacteristic('AccessoryInformation.Model', device.modelName ?? device.model)

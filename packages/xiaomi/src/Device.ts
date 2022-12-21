@@ -4,7 +4,7 @@ import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
   // Device ID ("did")
-  public get id(): number {
+  public get id(): string {
     return this.getAttribute('id')
   }
 
@@ -46,7 +46,7 @@ export class Device extends BaseDevice {
     return super.send(
       encodePacket(
         data,
-        this.id,
+        Number(this.id),
         this.token,
         this.serverStamp && this.serverStampTime
           ? this.serverStamp + Math.floor((Date.now() - this.serverStampTime) / 1000)
@@ -93,14 +93,14 @@ export class Device extends BaseDevice {
   // miot local protocal
 
   public getProperties(params: { siid: number; piid: number }[]) {
-    return this.call('get_properties', params.map(param => ({ ...param, did: this.id })))
+    return this.call('get_properties', params.map(param => ({ ...param, did: Number(this.id) })))
   }
 
   public setProperties(params: { siid: number; piid: number; value: any }[]) {
-    return this.call('set_properties', params.map(param => ({ ...param, did: this.id })))
+    return this.call('set_properties', params.map(param => ({ ...param, did: Number(this.id) })))
   }
 
   public action(param: { siid: number; aiid: number; in: any[] }) {
-    return this.call('action', { ...param, did: this.id })
+    return this.call('action', { ...param, did: Number(this.id) })
   }
 }

@@ -3,6 +3,14 @@ import type { Characteristic, PlatformAccessory, Service } from 'homebridge'
 import type { BasePlatform } from './BasePlatform'
 
 export abstract class BaseAccessory extends EventEmitter {
+  public get log() {
+    return this.platform.log
+  }
+
+  public get config() {
+    return this.platform.config
+  }
+
   public get api() {
     return this.platform.api
   }

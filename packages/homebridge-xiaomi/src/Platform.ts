@@ -15,10 +15,6 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
   }
 
-  protected getId(context: any) {
-    return context.id ? String(context.id) : undefined
-  }
-
   protected onDidFinishLaunching() {
     new Discovery()
       .on('error', err => this.log.error(err))
@@ -28,7 +24,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
   }
 
   protected onDidDiscoverDevice(device: Device) {
-    const id = String(device.id)
+    const id = device.id
     if (!this.config.tokens[id]) return
     // eslint-disable-next-line new-cap
     const accessory = new this.api.platformAccessory(id, this.api.hap.uuid.generate(id))
@@ -42,7 +38,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
 
   protected onDidDiscoverAccessory(accessory: PlatformAccessory) {
     const { context } = accessory
-    const id = this.getId(context)
+    const { id } = context
     if (!id) return
     if (this.accessories.has(id)) {
       //
