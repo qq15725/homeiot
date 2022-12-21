@@ -50,8 +50,8 @@ export abstract class BaseDiscovery extends EventEmitter {
       ...options
     } = this.options ?? {}
 
-    const onError = (err: Error) => this.emit('error', err)
-    const onClose = () => this._client = undefined
+    const onError = this.onError.bind(this)
+    const onClose = this.onClose.bind(this)
     const onMessage = this.onMessage.bind(this)
 
     return new Promise(resolve => {
@@ -83,6 +83,16 @@ export abstract class BaseDiscovery extends EventEmitter {
       if (!this._client) return resolve(this)
       this._client.close(() => resolve(this))
     })
+  }
+
+  // overrideable
+  protected onError(err: Error) {
+    this.emit('error', err)
+  }
+
+  // overrideable
+  protected onClose() {
+    this._client = undefined
   }
 
   // overrideable

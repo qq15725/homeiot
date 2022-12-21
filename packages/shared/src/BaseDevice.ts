@@ -62,9 +62,9 @@ export abstract class BaseDevice extends EventEmitter {
       }
 
       const onConnectTimeout = () => this._client instanceof Tcp && this._client?.destroy(new Error('Socket connect timeout'))
-      const onError = (err: Error) => this.emit('error', err)
-      const onClose = () => this._client = undefined
-      const onConnect = () => this.emit('connect')
+      const onError = this.onError.bind(this)
+      const onClose = this.onClose.bind(this)
+      const onConnect = this.onConnect.bind(this)
       const onMessage = this.onMessage.bind(this)
 
       if (type === 'tcp') {
@@ -165,6 +165,21 @@ export abstract class BaseDevice extends EventEmitter {
   }
 
   public getWaitingRequest = (uuid: string): WaitingRequest | undefined => this._waitingRequests.get(uuid)
+
+  // overrideable
+  protected onError(err: Error) {
+    this.emit('error', err)
+  }
+
+  // overrideable
+  protected onClose() {
+    this._client = undefined
+  }
+
+  // overrideable
+  protected onConnect() {
+    this.emit('connect')
+  }
 
   // overrideable
   protected onMessage(_message: Buffer) {}

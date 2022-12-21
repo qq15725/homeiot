@@ -71,7 +71,7 @@ export class Device extends BaseDevice {
     } else if (this.power !== value) {
       this.setPower(value)
         .then(() => this.setAttribute('power', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
@@ -87,7 +87,7 @@ export class Device extends BaseDevice {
     } else if (this.bright !== value) {
       this.setBright(value)
         .then(() => this.setAttribute('bright', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
@@ -103,7 +103,7 @@ export class Device extends BaseDevice {
     } else if (this.ct !== value) {
       this.setCtAbx(value)
         .then(() => this.setAttribute('ct', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
@@ -119,7 +119,7 @@ export class Device extends BaseDevice {
     } else if (this.rgb !== value) {
       this.setRgb(value)
         .then(() => this.setAttribute('rgb', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
@@ -135,7 +135,7 @@ export class Device extends BaseDevice {
     } else if (this.hue !== value && this.sat && value) {
       this.setHsv(value, this.sat)
         .then(() => this.setAttribute('hue', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
@@ -151,7 +151,7 @@ export class Device extends BaseDevice {
     } else if (this.sat !== value && this.hue && value) {
       this.setHsv(this.hue, value)
         .then(() => this.setAttribute('sat', value))
-        .catch(err => this.emit('error', err))
+        .catch(this.onError.bind(this))
     }
   }
 
