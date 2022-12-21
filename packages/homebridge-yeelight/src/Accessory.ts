@@ -28,6 +28,10 @@ export class Accessory extends BaseAccessory {
       .on('request', data => this.log.debug('[request]', data))
       .on('response', data => this.log.debug('[response]', data))
 
+    this.accessory.on('identify', () => {
+      device.startCf('500, 2, 0, 10, 500, 2, 0, 100', 10)
+    })
+
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
     this.setCharacteristic('AccessoryInformation.Model', device.modelName ?? device.model)
     this.setCharacteristic('AccessoryInformation.Name', name)

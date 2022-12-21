@@ -1,5 +1,5 @@
 import { BaseDiscovery } from '@homeiot/shared'
-import { EOL, toCameCase } from './utils'
+import { EOL } from './utils'
 import { Device } from './device'
 import type { BaseDiscoveryEvents } from '@homeiot/shared'
 
@@ -38,10 +38,9 @@ export class Discovery extends BaseDiscovery {
         (props, line) => {
           const array = line.split(':')
           if (array.length === 1) return props
-          const keyRaw = array[0]
-          const key = toCameCase(keyRaw.toLowerCase())
+          const key = array[0]
           const value = array.slice(1).join(':').trim()
-          switch (keyRaw) {
+          switch (key) {
             case 'Cache-Control':
             case 'Date':
             case 'Ext':

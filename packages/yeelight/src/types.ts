@@ -17,41 +17,41 @@ export interface DeviceProps {
   // The field is only valid if COLOR_MODE is 3.
   sat?: number
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode
-  colorMode?: 1 | 2 | 3
+  color_mode?: 1 | 2 | 3
   // 0: no flow is running / 1:color flow is running
   flowing?: 0 | 1
   // The remaining time of a sleep timer. Range 1 ~ 60 (minutes)
   delayoff?: number
   // Current flow parameters (only meaningful when 'flowing' is 1)
-  flowParams?: string
+  flow_params?: string
   // 1: Music mode is on / 0: Music mode is off
-  musicOn?: 1 | 0
+  music_on?: 1 | 0
   // Name of the device. User can use “set_name” to store the name on the device.
   // The maximum length is 64 bytes.
   // If none-ASCII character is used, it is suggested to BASE64 the name first and then use “set_name” to store it on device.
   name?: string
   // Background light power status
-  bgPower?: 'on' | 'off'
+  bg_power?: 'on' | 'off'
   // Background light is flowingt
-  bgFlowing?: 0 | 1
+  bg_flowing?: 0 | 1
   // Current flow parameters of background ligh
-  bgFlowParams?: string
+  bg_flow_params?: string
   // Color temperature of background light
-  bgCt?: number
+  bg_ct?: number
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode
-  bgLmode?: 1 | 2 | 3
+  bg_lmode?: 1 | 2 | 3
   // Brightness percentage of background light
-  bgBright?: number
+  bg_bright?: number
   // Color of background light
-  bgRgb?: number
+  bg_rgb?: number
   // Hue of background light
-  bgHue?: number
+  bg_hue?: number
   // Saturation of background light
-  bgSat?: number
+  bg_sat?: number
   // Brightness of night mode light
-  nlBr?: number
+  nl_br?: number
   // 0: daylight mode / 1: moonlight mode (ceiling light only)
-  activeMode?: 0 | 1
+  active_mode?: 0 | 1
 }
 
 export type DevicePropName = keyof DeviceProps
@@ -143,7 +143,7 @@ export interface DeviceInfo extends DeviceProps {
   // More values may be added in future.
   model?: DeviceProductModel
   // LED device's firmware version.
-  fwVer?: string
+  fw_ver?: string
   // All the supported control methods separated by white space.
   // 3Rd party device can use this field to dynamically render the control view to user if necessary.
   // Any control request that invokes method that is not included in this field will be rejected by smart LED
