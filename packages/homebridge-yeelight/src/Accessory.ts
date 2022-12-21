@@ -12,10 +12,11 @@ export class Accessory extends BaseAccessory {
 
   constructor(
     platform: Platform,
-    platformAccessory: PlatformAccessory,
+    accessory: PlatformAccessory,
     public readonly device: Device,
   ) {
-    super(platform, platformAccessory)
+    super(platform, accessory)
+
     let name = device.displayName
     const count = (Accessory.nameCount.get(name) || 0) + 1
     Accessory.nameCount.set(name, count)
@@ -26,84 +27,66 @@ export class Accessory extends BaseAccessory {
       .on('connect', () => platform.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
       .on('request', data => platform.log.debug('[request]', data))
       .on('response', data => platform.log.debug('[response]', data))
-      .connect()
 
-    this
-      .setInfo({
-        manufacturer: Platform.platformName,
-        model: device.modelName ?? device.model,
-        name,
-        serialNumber: device.id,
-        firmwareRevision: device.fwVer,
-      })
+    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
+    this.setCharacteristic('AccessoryInformation.Model', device.modelName ?? device.model)
+    this.setCharacteristic('AccessoryInformation.Name', name)
+    this.setCharacteristic('AccessoryInformation.SerialNumber', device.id)
+    this.setCharacteristic('AccessoryInformation.FirmwareRevision', device.fwVer)
 
-    const lightBulb = this.platformAccessory.getService(this.serviceClass.Lightbulb)
-      ?? this.platformAccessory.addService(new this.serviceClass.Lightbulb(name))
+    this.getService('Lightbulb', name)
 
-    this.onCharacteristic(
-      lightBulb.getCharacteristic(this.characteristicClass.On),
-      () => device.power === 'on',
-      val => device.power = val ? 'on' : 'off',
-    )
+    this.onCharacteristic('Lightbulb.On', {
+      onGet: () => device.power === 'on',
+      onSet: val => device.power = val ? 'on' : 'off',
+    })
 
-    this.onCharacteristic(
-      lightBulb.getCharacteristic(this.characteristicClass.Brightness),
-      () => device.bright,
-      val => device.bright = val,
-    )
+    this.onCharacteristic('Lightbulb.Brightness', {
+      onGet: () => device.bright,
+      onSet: val => device.bright = val,
+    })
 
     if (device.supportColor) {
-      this.onCharacteristic(
-        lightBulb.getCharacteristic(this.characteristicClass.Hue),
-        () => device.hue,
-        v => device.hue = v,
-      )
+      this.onCharacteristic('Lightbulb.Hue', {
+        onGet: () => device.hue,
+        onSet: v => device.hue = v,
+      })
 
-      this.onCharacteristic(
-        lightBulb.getCharacteristic(this.characteristicClass.Saturation),
-        () => device.sat,
-        v => device.sat = v,
-      )
+      this.onCharacteristic('Lightbulb.Saturation', {
+        onGet: () => device.sat,
+        onSet: v => device.sat = v,
+      })
     }
 
     if (device.supportColorTemperature) {
-      const characteristic = (
-        lightBulb.getCharacteristic(this.characteristicClass.ColorTemperature)
-        || lightBulb.addOptionalCharacteristic(this.characteristicClass.ColorTemperature)
-      )
-
-      this.onCharacteristic(
-        characteristic,
-        () => device.ct ? convertColorTemperature(device.ct) : undefined,
-        v => device.ct = convertColorTemperature(v),
-      )
-
-      characteristic.setProps({
-        maxValue: convertColorTemperature(device.supportColorTemperature.min),
-        minValue: convertColorTemperature(device.supportColorTemperature.max),
+      this.onCharacteristic('LightBulb.ColorTemperature', {
+        onGet: () => device.ct ? convertColorTemperature(device.ct) : undefined,
+        onSet: v => device.ct = convertColorTemperature(v),
       })
+        .setProps({
+          maxValue: convertColorTemperature(device.supportColorTemperature.min),
+          minValue: convertColorTemperature(device.supportColorTemperature.max),
+        })
     }
   }
 
   public updateProps(info: Record<string, any>) {
-    const lightBulb = this.getOrAddService(this.serviceClass.Lightbulb)
-
     for (const [key, value] of Object.entries(info)) {
       switch (key) {
         case 'power':
-          lightBulb.updateCharacteristic(this.characteristicClass.On, value === 'on')
+          this.setCharacteristic('LightBulb.on', value === 'on')
           break
         case 'hue':
-          lightBulb.updateCharacteristic(this.characteristicClass.Hue, value)
+          this.setCharacteristic('LightBulb.Hue', value)
           break
         case 'sat':
-          lightBulb.updateCharacteristic(this.characteristicClass.Saturation, value)
+          this.setCharacteristic('LightBulb.Saturation', value)
           break
         case 'bright':
-          lightBulb.updateCharacteristic(this.characteristicClass.Brightness, value)
+          this.setCharacteristic('LightBulb.Brightness', value)
           break
         case 'ct':
-          lightBulb.updateCharacteristic(this.characteristicClass.ColorTemperature, convertColorTemperature(value))
+          this.setCharacteristic('LightBulb.ColorTemperature', convertColorTemperature(value))
           break
       }
     }

@@ -42,7 +42,6 @@ new Api('xiaomi-user-name', 'password')
       .on('didFinishLaunching', () => console.debug('Local discovery started'))
       .on('didDiscoverDevice', device => console.debug(device))
       .start()
-      .catch(err => console.error(err))
   })
 ```
 

@@ -1,6 +1,7 @@
 import { Socket as Udp, createSocket as createUdp } from 'node:dgram'
 import { Socket as Tcp } from 'node:net'
 import { EventEmitter } from './EventEmitter'
+import { sleep } from './utils'
 import type { SocketOptions as UdpOptions } from 'node:dgram'
 import type { SocketConstructorOpts as TcpOptions } from 'node:net'
 
@@ -36,48 +37,47 @@ export abstract class BaseDevice extends EventEmitter {
   public getAttributes = (): Record<string, any> => ({ ...Object.fromEntries(this._attributes), host: this.host, port: this.port })
   public setAttributes = (attributes: Record<string, any>): void => { this._attributes = new Map(Object.entries(attributes)) }
 
-  public connect(): Promise<this> {
-    const {
-      type = 'tcp',
-      connectTimeout = 3000,
-      timeout = 3000,
-      encoding = 'utf8',
-      tcpOptions,
-      udpOptions,
-    } = this._options ?? {}
+  public start(): Promise<this> {
+    return new Promise(resolve => {
+      const {
+        type = 'tcp',
+        connectTimeout = 3000,
+        timeout = 3000,
+        encoding = 'utf8',
+        tcpOptions,
+        udpOptions,
+      } = this._options ?? {}
 
-    if (this._client instanceof Udp) {
-      return Promise.resolve(this)
-    } else if (this._client instanceof Tcp) {
-      let counts = 30
-      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-      const waitForConnect = (): Promise<this> => {
-        if (this._client instanceof Tcp && this._client.connecting && --counts) return sleep(100).then(waitForConnect)
-        if (counts <= 0) return Promise.reject(new Error('Socket connect timeout'))
-        return Promise.resolve(this)
+      if (this._client instanceof Udp) {
+        return resolve(this)
+      } else if (this._client instanceof Tcp) {
+        const waitForConnect = (counts: number): Promise<this> => {
+          return this._client instanceof Tcp
+          && this._client.connecting
+          && counts
+            ? sleep(100).then(() => waitForConnect(--counts))
+            : Promise.resolve(this)
+        }
+        return waitForConnect(30)
       }
-      return Promise.resolve().then(waitForConnect)
-    }
 
-    return new Promise((resolve, reject) => {
       const onConnectTimeout = () => this._client instanceof Tcp && this._client?.destroy(new Error('Socket connect timeout'))
-      const onConnectError = reject
       const onError = (err: Error) => this.emit('error', err)
       const onClose = () => this._client = undefined
+      const onConnect = () => this.emit('connect')
       const onMessage = this.onMessage.bind(this)
+
       if (type === 'tcp') {
         this._client = new Tcp(tcpOptions)
           .setTimeout(connectTimeout)
           .once('timeout', onConnectTimeout)
-          .once('error', onConnectError)
+          .on('error', onError)
           .once('connect', () => {
-            this.emit('connect')
+            onConnect()
             ;(this._client as Tcp)
               .off('timeout', onConnectTimeout)
-              .off('error', onConnectError)
               .setEncoding(encoding)
               .setTimeout(timeout)
-              .on('error', onError)
               .once('close', onClose)
               .on('data', onMessage)
             resolve(this)
@@ -85,38 +85,43 @@ export abstract class BaseDevice extends EventEmitter {
           .connect(this.port, this.host)
       } else if (type.startsWith('udp')) {
         this._client = createUdp({ type, reuseAddr: true, ...udpOptions })
-          .on('listening', () => {
+          .on('error', onError)
+          .once('connect', onConnect)
+          .once('listening', () => {
             this.emit('listening')
             ;(this._client as Udp)
-              .on('error', onError)
-              .on('close', onClose)
+              .once('close', onClose)
               .on('message', onMessage)
             resolve(this)
           })
-          .on('connect', () => this.emit('connect'))
           .bind()
       }
     })
   }
 
-  public deconnect() {
-    if (this._client instanceof Udp) {
-      this._client.close()
-    } else if (this._client instanceof Tcp) {
-      this._client.destroy()
-    }
+  public stop(): Promise<this> {
+    return new Promise(resolve => {
+      if (this._client instanceof Udp) {
+        this._client.close(() => resolve(this))
+      } else if (this._client instanceof Tcp) {
+        this._client.destroy()
+        resolve(this)
+      } else {
+        resolve(this)
+      }
+    })
   }
 
-  public send(data: string | Uint8Array): Promise<void> {
-    return this.connect().then(() => {
+  public send(data: string | Uint8Array): Promise<this> {
+    return this.start().then(() => {
       return new Promise((resolve, reject) => {
-        const onError = (err?: Error | null) => err ? reject(err) : resolve()
+        const onCallback = (err?: Error | null) => err ? reject(err) : resolve(this)
         if (!this._client) {
-          onError(new Error('Socket is closed'))
+          onCallback(new Error('Socket is closed'))
         } else if (this._client instanceof Udp) {
-          this._client.send(data, 0, data.length, this.port, this.host, onError)
+          this._client.send(data, 0, data.length, this.port, this.host, onCallback)
         } else if (this._client instanceof Tcp) {
-          this._client.write(data, onError)
+          this._client.write(data, onCallback)
         }
       })
     })
@@ -139,13 +144,13 @@ export abstract class BaseDevice extends EventEmitter {
         clear()
         this.emit('response', res, uuid)
         resolve(res)
-        options?.deconnect && this.deconnect()
+        options?.deconnect && this.stop()
       }
 
       const onReject = (err: any) => {
         clear()
         reject(err)
-        options?.deconnect && this.deconnect()
+        options?.deconnect && this.stop()
       }
 
       timer = setTimeout(() => onReject(new Error(`Request timeout ${ uuid }`)), 500)
@@ -161,5 +166,6 @@ export abstract class BaseDevice extends EventEmitter {
 
   public getWaitingRequest = (uuid: string): WaitingRequest | undefined => this._waitingRequests.get(uuid)
 
+  // overrideable
   protected onMessage(_message: Buffer) {}
 }

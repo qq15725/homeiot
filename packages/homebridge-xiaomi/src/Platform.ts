@@ -25,7 +25,6 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
       .on('didFinishLaunching', () => this.log.debug('Local discovery started'))
       .on('didDiscoverDevice', this.onDidDiscoverDevice.bind(this))
       .start()
-      .catch(err => this.log.error(err))
   }
 
   protected onDidDiscoverDevice(device: Device) {

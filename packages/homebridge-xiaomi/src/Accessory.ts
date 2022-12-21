@@ -6,10 +6,10 @@ import type { PlatformAccessory } from 'homebridge'
 export class Accessory extends BaseAccessory {
   constructor(
     platform: Platform,
-    platformAccessory: PlatformAccessory,
+    accessory: PlatformAccessory,
     public readonly device: Device,
   ) {
-    super(platform, platformAccessory)
+    super(platform, accessory)
 
     device
       .on('error', err => platform.log.error(err))
@@ -23,7 +23,7 @@ export class Accessory extends BaseAccessory {
   }
 
   public save() {
-    this.platformAccessory.context = this.device.getAttributes()
+    this.accessory.context = this.device.getAttributes()
     super.save()
   }
 }

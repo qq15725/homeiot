@@ -1,83 +1,70 @@
 import { EventEmitter } from '@homeiot/shared'
-import type { Characteristic, PlatformAccessory, Service, WithUUID } from 'homebridge'
+import type { Characteristic, PlatformAccessory, Service } from 'homebridge'
 import type { BasePlatform } from './BasePlatform'
 
 export abstract class BaseAccessory extends EventEmitter {
-  public readonly serviceClass: typeof Service
-  public readonly characteristicClass: typeof Characteristic
+  public get api() {
+    return this.platform.api
+  }
+
+  public get Service() {
+    return this.platform.Service
+  }
+
+  public get Characteristic() {
+    return this.platform.Characteristic
+  }
 
   constructor(
     public readonly platform: BasePlatform,
-    public readonly platformAccessory: PlatformAccessory,
+    public readonly accessory: PlatformAccessory,
   ) {
     super()
-    this.serviceClass = platform.serviceClass
-    this.characteristicClass = platform.characteristicClass
-
-    // Set configured name
-    this.getInfoService()
-      .getCharacteristic(this.characteristicClass.ConfiguredName)
-      .on('set', (value, callback) => {
-        const name = value.toString()
-        this.setInfo({ name })
-        this.platform.api.updatePlatformAccessories([this.platformAccessory])
-        callback()
-      })
+    this.onCharacteristic('AccessoryInformation.ConfiguredName', {
+      onSet: name => {
+        this.setCharacteristic('AccessoryInformation.Name', name)
+        this.save()
+      },
+    })
   }
 
-  public getOrAddService<T extends WithUUID<typeof Service>>(Klass: T): Service {
-    return (
-      this.platformAccessory.getService(Klass)
-      || this.platformAccessory.addService(new (Klass as any)())
-    ) as any
+  public getService(key: string, ...args: any[]): Service {
+    const Klass = (this.Service as any)[key]
+    return this.accessory.getService(Klass)
+      || this.accessory.addService(new Klass(...args))
   }
 
-  public getInfoService() {
-    return this.getOrAddService(this.serviceClass.AccessoryInformation)
+  public getCharacteristic(key: string): Characteristic {
+    const [key1, key2] = key.split('.')
+    const service = this.getService(key1)
+    const klass = (this.Characteristic as any)[key2]
+    return service.getCharacteristic(klass) as Characteristic
   }
 
-  public setInfo(
-    info: {
-      manufacturer?: string
-      model?: string
-      name?: string
-      serialNumber?: string
-      firmwareRevision?: string
+  public onCharacteristic(
+    key: string,
+    options?: {
+      onGet?: () => any | Promise<any>
+      onSet?: (value: any) => any | Promise<any>
     },
-  ): this {
-    const service = this.getInfoService()
-    if (info.manufacturer) service.updateCharacteristic(this.characteristicClass.Manufacturer, info.manufacturer)
-    if (info.model) service.updateCharacteristic(this.characteristicClass.Model, info.model)
-    if (info.name) service.updateCharacteristic(this.characteristicClass.Name, info.name)
-    if (info.serialNumber) service.updateCharacteristic(this.characteristicClass.SerialNumber, info.serialNumber)
-    if (info.firmwareRevision) service.updateCharacteristic(this.characteristicClass.FirmwareRevision, info.firmwareRevision)
-    return this
+  ): Characteristic {
+    const { onGet, onSet } = options ?? {}
+    const characteristic = this.getCharacteristic(key)
+    onGet && characteristic.onGet(async () => {
+      return await onGet()
+    })
+    onSet && characteristic.onSet(async (value) => {
+      return await onSet(value)
+    })
+    return characteristic
   }
 
-  protected onCharacteristic(
-    characteristic: Characteristic,
-    getter: () => any,
-    setter: (value: any) => any,
-  ) {
-    return characteristic
-      .on('get', async callback => {
-        try {
-          callback(null, await getter())
-        } catch (e: any) {
-          callback(e)
-        }
-      })
-      .on('set', async (value, callback) => {
-        try {
-          await setter(value)
-          callback(null)
-        } catch (e: any) {
-          callback(e)
-        }
-      })
+  public setCharacteristic(key: string, value: any) {
+    this.getCharacteristic(key)
+      .updateValue(value)
   }
 
   public save() {
-    this.platform.api.updatePlatformAccessories([this.platformAccessory])
+    this.api.updatePlatformAccessories([this.accessory])
   }
 }

@@ -34,7 +34,6 @@ new Discovery()
   .on('didFinishLaunching', () => console.debug('Local discovery started'))
   .on('didDiscoverDevice', device => console.debug(device))
   .start()
-  .catch(err => console.error(err))
 ```
 
 ## Official documentation

@@ -35,7 +35,6 @@ new Discovery()
   .on('didFinishLaunching', () => console.debug('Local discovery started'))
   .on('didDiscoverDevice', onDidDiscoverDevice)
   .start()
-  .catch(err => console.error(err))
 
 function onDidDiscoverDevice(device: Device) {
   // Smart LED is turned on
