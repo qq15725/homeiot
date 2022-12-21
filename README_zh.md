@@ -33,10 +33,8 @@ pnpm add -g homebridge
 ```json
 {
   "platforms": [
-    {
-      "platform": "yeelight",
-      "name": "Yeelight"
-    }
+    { "platform": "yeelight", "name": "Yeelight" },
+    { "platform": "xiaomi", "name": "Xiaomi" }
   ]
 }
 ```

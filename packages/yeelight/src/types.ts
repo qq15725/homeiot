@@ -2,7 +2,6 @@ export interface DeviceProps {
   // on: smart LED is turned on / off: smart LED is turned off
   power?: 'on' | 'off'
   // Brightness percentage. Range 1 ~ 100
-  // Brightness percentage. Range 1 ~ 100
   bright?: number
   // Color temperature. Range 1700 ~ 6500(k)
   // This field is only valid if COLOR_MODE is 2.
@@ -130,12 +129,12 @@ export interface DeviceInfo extends DeviceProps {
   host: string
   port?: number
   from?: 'response' | 'notify' | string
-  server?: string
-  // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
-  id?: string
+  Server?: string
   // field contains the service access point of the smart LED deivce.
   // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
-  location?: string
+  Location?: string
+  // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
+  id?: string
   // The product model of a Yeelight smart device. Current it can be "mono", "color", “stripe”, “ceiling”, “bslamp”. For "mono", it represents device that only supports brightness adjustment.
   // For "color", it represents device that support both color and color temperature adjustment.
   // “Stripe” stands for Yeelight smart LED stripe.

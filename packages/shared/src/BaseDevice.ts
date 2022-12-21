@@ -29,6 +29,7 @@ export abstract class BaseDevice extends EventEmitter {
     public readonly port: number,
     private readonly _options?: {
       type?: 'tcp' | 'udp4' | 'udp6'
+      retries?: number
       encoding?: BufferEncoding
       connectTimeout?: number
       timeout?: number
@@ -59,12 +60,12 @@ export abstract class BaseDevice extends EventEmitter {
       if (this._client instanceof Udp) {
         return resolve(this)
       } else if (this._client instanceof Tcp) {
-        const waitForConnect = (counts: number): Promise<this> => {
-          return this._client instanceof Tcp
+        const waitForConnect = (counts: number) => {
+          this._client instanceof Tcp
           && this._client.connecting
           && counts
             ? sleep(100).then(() => waitForConnect(--counts))
-            : Promise.resolve(this)
+            : resolve(this)
         }
         return waitForConnect(30)
       }

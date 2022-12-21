@@ -58,11 +58,9 @@ export abstract class BaseAccessory extends EventEmitter {
   ): Characteristic {
     const { onGet, onSet } = options ?? {}
     const characteristic = this.getCharacteristic(key)
-    onGet && characteristic.onGet(async () => {
-      return await onGet()
-    })
+    onGet && characteristic.onGet(onGet)
     onSet && characteristic.onSet(async (value) => {
-      return await onSet(value)
+      await onSet(value)
     })
     return characteristic
   }

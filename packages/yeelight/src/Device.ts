@@ -43,7 +43,7 @@ export class Device extends BaseDevice {
   // field contains the service access point of the smart LED deivce.
   // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
   public get location(): string | undefined {
-    return this.getAttribute('location')
+    return this.getAttribute('Location')
   }
 
   // LED device's firmware version.
@@ -259,12 +259,11 @@ export class Device extends BaseDevice {
 
   public call(method: string, params: any[] = []): Promise<any> {
     const id = this.generateId()
-    return this
-      .request(String(id), JSON.stringify({ id, method, params }) + EOL)
+    return this.request(String(id), JSON.stringify({ id, method, params }) + EOL)
       .then(val => val.result)
   }
 
-  public onMessage(message: Buffer) {
+  protected onMessage(message: Buffer) {
     const items = message
       .toString()
       .split(EOL)
@@ -272,11 +271,7 @@ export class Device extends BaseDevice {
       .map(v => JSON.parse(v))
 
     for (const data of items) {
-      if (
-        'method' in data
-        && 'params' in data
-        && data.method === 'props'
-      ) {
+      if ('method' in data && 'params' in data && data.method === 'props') {
         this.emit('update:props', data.params)
       } else if ('id' in data && 'result' in data) {
         this.getWaitingRequest(String(data.id))?.resolve(data)
@@ -286,7 +281,7 @@ export class Device extends BaseDevice {
         && 'code' in data.error
         && 'message' in data.error
       ) {
-        this.getWaitingRequest(String(data.id))?.reject(data.error.message)
+        this.getWaitingRequest(String(data.id))?.reject(new Error(data.error.message))
       }
     }
   }

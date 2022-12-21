@@ -24,6 +24,14 @@ export class Device extends BaseDevice {
     return this.getAttribute('serverStampTime')
   }
 
+  public get model(): string | undefined {
+    return this.getAttribute('model')
+  }
+
+  public get fwVer(): string | undefined {
+    return this.getAttribute('fw_ver')
+  }
+
   constructor(info: DeviceInfo) {
     const { host, port = 54321, ...props } = info
     super(host, port, { type: 'udp4' })
@@ -31,12 +39,9 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any = [], options?: { deconnect: boolean }): Promise<any> {
-    try {
-      const id = this.generateId()
-      return this.request(String(id), JSON.stringify({ id, method, params }), options)
-    } catch (err) {
-      return Promise.reject(err)
-    }
+    const id = this.generateId()
+    return this.request(String(id), JSON.stringify({ id, method, params }), options)
+      .then(val => val.result)
   }
 
   public send(data: string) {
@@ -87,7 +92,12 @@ export class Device extends BaseDevice {
   // miio local protocal
 
   public miIoInfo() {
-    return this.call('miIO.info')
+    return this.call('miIO.info').then(res => {
+      for (const [key, val] of Object.entries(res)) {
+        this.setAttribute(key, val)
+      }
+      return res
+    })
   }
 
   // miot local protocal

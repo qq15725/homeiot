@@ -45,7 +45,6 @@ export class Discovery extends BaseDiscovery {
             case 'Date':
             case 'Ext':
             case 'Host':
-            case 'Server':
             case 'NTS': // ssdp:alive
               break
             case 'bright':
@@ -70,9 +69,9 @@ export class Discovery extends BaseDiscovery {
         { from } as Record<string, any>,
       )
 
-    if (!info.location?.startsWith('yeelight://')) return
+    if (!info.Location?.startsWith('yeelight://')) return
 
-    const [host, port] = info.location.split('//')[1].split(':')
+    const [host, port] = info.Location.split('//')[1].split(':')
 
     this.emit('device', new Device({
       ...info,

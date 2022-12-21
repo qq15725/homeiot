@@ -33,10 +33,8 @@ Configure `config.json` file `platforms` field
 ```json
 {
   "platforms": [
-    {
-      "platform": "yeelight",
-      "name": "Yeelight"
-    }
+    { "platform": "yeelight", "name": "Yeelight" },
+    { "platform": "xiaomi", "name": "Xiaomi" }
   ]
 }
 ```

@@ -24,13 +24,11 @@ export class Accessory extends BaseAccessory {
 
     device
       .on('error', err => this.log.error(err))
-      .on('start', () => this.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
-      .on('request', data => this.log.debug('[request]', data))
-      .on('response', data => this.log.debug('[response]', data))
+      .on('start', () => this.log.debug('[start]', `${ device.host }:${ device.port } ${ name }`))
+      .on('request', data => this.log.debug('[request]', `${ device.host }:${ device.port }`, data))
+      .on('response', data => this.log.debug('[response]', `${ device.host }:${ device.port }`, data))
 
-    this.accessory.on('identify', () => {
-      device.startCf('500, 2, 0, 10, 500, 2, 0, 100', 10)
-    })
+    device.startCf('500, 2, 0, 10, 500, 2, 0, 100', 4)
 
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
     this.setCharacteristic('AccessoryInformation.Model', device.modelName ?? device.model)
@@ -63,7 +61,7 @@ export class Accessory extends BaseAccessory {
     }
 
     if (device.supportColorTemperature) {
-      this.onCharacteristic('LightBulb.ColorTemperature', {
+      this.onCharacteristic('Lightbulb.ColorTemperature', {
         onGet: () => device.ct ? convertColorTemperature(device.ct) : undefined,
         onSet: v => device.ct = convertColorTemperature(v),
       })
@@ -76,22 +74,16 @@ export class Accessory extends BaseAccessory {
 
   public updateProps(info: Record<string, any>) {
     for (const [key, value] of Object.entries(info)) {
-      switch (key) {
-        case 'power':
-          this.setCharacteristic('LightBulb.on', value === 'on')
-          break
-        case 'hue':
-          this.setCharacteristic('LightBulb.Hue', value)
-          break
-        case 'sat':
-          this.setCharacteristic('LightBulb.Saturation', value)
-          break
-        case 'bright':
-          this.setCharacteristic('LightBulb.Brightness', value)
-          break
-        case 'ct':
-          this.setCharacteristic('LightBulb.ColorTemperature', convertColorTemperature(value))
-          break
+      if (key === 'power') {
+        this.setCharacteristic('Lightbulb.On', value === 'on')
+      } else if (key === 'hue') {
+        this.setCharacteristic('Lightbulb.Hue', value)
+      } else if (key === 'sat') {
+        this.setCharacteristic('Lightbulb.Saturation', value)
+      } else if (key === 'bright') {
+        this.setCharacteristic('Lightbulb.Brightness', value)
+      } else if (key === 'ct') {
+        this.setCharacteristic('Lightbulb.ColorTemperature', convertColorTemperature(value))
       }
     }
   }

@@ -22,7 +22,7 @@ export abstract class BasePlatform<T extends BaseAccessory = BaseAccessory> {
     if (!id || this.accessories.has(id)) {
       this.log.warn(`Ingnoring duplicate accessory from cache: ${ displayName }`)
     } else {
-      this.log.info(`Loading accessory from cache: ${ displayName }`)
+      this.log(`Loading accessory from cache: ${ displayName }`)
       this.onDidDiscoverAccessory(accessory)
     }
   }

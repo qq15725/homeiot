@@ -10,8 +10,8 @@ export function createCli() {
     .command('discover', 'List all devices from local discover')
     .action(() => {
       new Discovery()
-        .on('didFinishLaunching', () => consola.start('looking for local devices...'))
-        .on('didDiscoverDevice', device => consola.log(device.getAttributes()))
+        .on('start', () => consola.start('looking for local devices...'))
+        .on('device', device => consola.log(device.getAttributes()))
         .start()
     })
 
