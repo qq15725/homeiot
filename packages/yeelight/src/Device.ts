@@ -66,13 +66,10 @@ export class Device extends BaseDevice {
   }
 
   public set power(value) {
-    if (value === undefined) {
-      this.setAttribute('power', value)
-    } else if (this.power !== value) {
-      this.setPower(value)
-        .then(() => this.setAttribute('power', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.power !== value) {
+      this.setPower(value).catch(this.onError.bind(this))
     }
+    this.setAttribute('power', value)
   }
 
   // Brightness percentage. Range 1 ~ 100
@@ -81,13 +78,10 @@ export class Device extends BaseDevice {
   }
 
   public set bright(value) {
-    if (value === undefined) {
-      this.setAttribute('bright', value)
-    } else if (this.bright !== value) {
-      this.setBright(value)
-        .then(() => this.setAttribute('bright', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.bright !== value) {
+      this.setBright(value).catch(this.onError.bind(this))
     }
+    this.setAttribute('bright', value)
   }
 
   // Color temperature. Range 1700 ~ 6500(k)
@@ -97,13 +91,10 @@ export class Device extends BaseDevice {
   }
 
   public set ct(value) {
-    if (value === undefined) {
-      this.setAttribute('ct', value)
-    } else if (this.ct !== value) {
-      this.setCtAbx(value)
-        .then(() => this.setAttribute('ct', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.ct !== value) {
+      this.setCtAbx(value).catch(this.onError.bind(this))
     }
+    this.setAttribute('ct', value)
   }
 
   // Color. Range 1 ~ 16777215
@@ -113,13 +104,10 @@ export class Device extends BaseDevice {
   }
 
   public set rgb(value) {
-    if (value === undefined) {
-      this.setAttribute('rgb', value)
-    } else if (this.rgb !== value) {
-      this.setRgb(value)
-        .then(() => this.setAttribute('rgb', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.rgb !== value) {
+      this.setRgb(value).catch(this.onError.bind(this))
     }
+    this.setAttribute('rgb', value)
   }
 
   // Hue. Range 0 ~ 359
@@ -129,13 +117,10 @@ export class Device extends BaseDevice {
   }
 
   public set hue(value) {
-    if (value === undefined) {
-      this.setAttribute('hue', value)
-    } else if (this.hue !== value && this.sat && value) {
-      this.setHsv(value, this.sat)
-        .then(() => this.setAttribute('hue', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.hue !== value && this.sat !== undefined) {
+      this.setHsv(value, this.sat).catch(this.onError.bind(this))
     }
+    this.setAttribute('hue', value)
   }
 
   // Saturation. Range 0 ~ 100
@@ -145,13 +130,10 @@ export class Device extends BaseDevice {
   }
 
   public set sat(value) {
-    if (value === undefined) {
-      this.setAttribute('sat', value)
-    } else if (this.sat !== value && this.hue && value) {
-      this.setHsv(this.hue, value)
-        .then(() => this.setAttribute('sat', value))
-        .catch(this.onError.bind(this))
+    if (value !== undefined && this.sat !== value && this.hue !== undefined) {
+      this.setHsv(this.hue, value).catch(this.onError.bind(this))
     }
+    this.setAttribute('sat', value)
   }
 
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode

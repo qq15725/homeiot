@@ -56,7 +56,7 @@ export class Accessory extends BaseAccessory {
 
       this.onCharacteristic('Lightbulb.Saturation', {
         onGet: () => device.sat,
-        onSet: v => device.sat = v,
+        onSet: v => device.setAttribute('sat', v),
       })
     }
 
