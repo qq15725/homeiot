@@ -4,7 +4,8 @@ import type { RemoteInfo, Socket as Udp, SocketOptions as UdpOptions } from 'nod
 
 export type BaseDiscoveryEvents = {
   error: (error: Error) => void
-  didFinishLaunching: () => void
+  start: () => void
+  stop: () => void
 }
 
 export abstract class BaseDiscovery extends EventEmitter {
@@ -51,7 +52,7 @@ export abstract class BaseDiscovery extends EventEmitter {
     } = this.options ?? {}
 
     const onError = this.onError.bind(this)
-    const onClose = this.onClose.bind(this)
+    const onStop = this.onStop.bind(this)
     const onMessage = this.onMessage.bind(this)
 
     return new Promise(resolve => {
@@ -62,7 +63,7 @@ export abstract class BaseDiscovery extends EventEmitter {
           this._client
             ?.off('error', onListenError)
             .on('error', onError)
-            .once('close', onClose)
+            .once('close', onStop)
             .on('message', onMessage)
           this._client?.setBroadcast(true)
           if (this.multicastHost !== '255.255.255.255') {
@@ -71,7 +72,7 @@ export abstract class BaseDiscovery extends EventEmitter {
           this._client?.setMulticastTTL(multicastTtl)
           if (multicastInterface) this._client?.setMulticastInterface(multicastInterface)
           resolve(this)
-          this.emit('didFinishLaunching')
+          this.onStart()
           this.sendHelloPacket().catch(onError)
         })
         .bind(serverPort, serverHost)
@@ -91,8 +92,14 @@ export abstract class BaseDiscovery extends EventEmitter {
   }
 
   // overrideable
-  protected onClose() {
+  protected onStart() {
+    this.emit('start')
+  }
+
+  // overrideable
+  protected onStop() {
     this._client = undefined
+    this.emit('stop')
   }
 
   // overrideable

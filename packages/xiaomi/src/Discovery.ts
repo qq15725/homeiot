@@ -5,7 +5,7 @@ import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { RemoteInfo } from 'node:dgram'
 
 export type DiscoveryEvents = BaseDiscoveryEvents & {
-  didDiscoverDevice: (device: Device) => void
+  device: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -22,7 +22,7 @@ export class Discovery extends BaseDiscovery {
 
     if (!stamp || encrypted.length > 0) return
 
-    this.emit('didDiscoverDevice', new Device({
+    this.emit('device', new Device({
       host,
       id: deviceId,
       token: checksum.toString('hex').match(/^[fF0]+$/)

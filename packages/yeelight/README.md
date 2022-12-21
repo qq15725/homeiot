@@ -32,24 +32,27 @@ import type { Device } from '@homeiot/yeelight'
 
 new Discovery()
   .on('error', err => console.error(err))
-  .on('didFinishLaunching', () => console.debug('Local discovery started'))
-  .on('didDiscoverDevice', onDidDiscoverDevice)
+  .on('start', () => console.log('Local discovery started'))
+  .on('stop', () => console.log('Local discovery stoped'))
+  .on('device', (device: Device) => {
+    // Smart LED is turned on
+    device.power = 'on'
+  })
   .start()
-
-function onDidDiscoverDevice(device: Device) {
-  // Smart LED is turned on
-  device.power = 'on'
-  // Brightness percentage. Range 1 ~ 100
-  device.bright = 50
-}
 ```
 
-### Specified local device connection
+### Control local device
 
 ```ts
 import { Device } from '@homeiot/yeelight'
 
 const device = new Device({ host: '192.168.1.239' })
+  .on('error', err => console.error(err))
+  .on('start', () => console.log('Local device started'))
+  .on('stop', () => console.log('Local device stoped'))
+  .on('request', data => console.log('[request]', data))
+  .on('response', data => console.log('[response]', data))
+
 // Smart LED is turned on
 device.power = 'on'
 // Brightness percentage. Range 1 ~ 100

@@ -10,6 +10,14 @@ export interface WaitingRequest {
   reject: any
 }
 
+export type BaseDeviceEvents = {
+  error: (error: Error) => void
+  start: () => void
+  stop: () => void
+  request: (data: string | Uint8Array, uuid: string) => void
+  response: (data: any, uuid: string) => void
+}
+
 export abstract class BaseDevice extends EventEmitter {
   private static _autoIncrementId = 0
   private _client?: Tcp | Udp
@@ -63,8 +71,8 @@ export abstract class BaseDevice extends EventEmitter {
 
       const onConnectTimeout = () => this._client instanceof Tcp && this._client?.destroy(new Error('Socket connect timeout'))
       const onError = this.onError.bind(this)
-      const onClose = this.onClose.bind(this)
-      const onConnect = this.onConnect.bind(this)
+      const onStart = this.onStart.bind(this)
+      const onStop = this.onStop.bind(this)
       const onMessage = this.onMessage.bind(this)
 
       if (type === 'tcp') {
@@ -73,12 +81,12 @@ export abstract class BaseDevice extends EventEmitter {
           .once('timeout', onConnectTimeout)
           .on('error', onError)
           .once('connect', () => {
-            onConnect()
+            onStart()
             ;(this._client as Tcp)
               .off('timeout', onConnectTimeout)
               .setEncoding(encoding)
               .setTimeout(timeout)
-              .once('close', onClose)
+              .once('close', onStop)
               .on('data', onMessage)
             resolve(this)
           })
@@ -86,11 +94,10 @@ export abstract class BaseDevice extends EventEmitter {
       } else if (type.startsWith('udp')) {
         this._client = createUdp({ type, reuseAddr: true, ...udpOptions })
           .on('error', onError)
-          .once('connect', onConnect)
           .once('listening', () => {
-            this.emit('listening')
+            onStart()
             ;(this._client as Udp)
-              .once('close', onClose)
+              .once('close', onStop)
               .on('message', onMessage)
             resolve(this)
           })
@@ -130,8 +137,7 @@ export abstract class BaseDevice extends EventEmitter {
   public generateId = (): number => ++BaseDevice._autoIncrementId
 
   public request(uuid: string, data: string | Uint8Array, options?: { deconnect: boolean }): Promise<any> {
-    this.emit('request', data, uuid)
-
+    this.onRequest(uuid, data)
     let timer: any
 
     const clear = () => {
@@ -142,7 +148,7 @@ export abstract class BaseDevice extends EventEmitter {
     return new Promise((resolve, reject) => {
       const onResolve = (res: any) => {
         clear()
-        this.emit('response', res, uuid)
+        this.onResponse(uuid, res)
         resolve(res)
         options?.deconnect && this.stop()
       }
@@ -172,13 +178,24 @@ export abstract class BaseDevice extends EventEmitter {
   }
 
   // overrideable
-  protected onClose() {
-    this._client = undefined
+  protected onStart() {
+    this.emit('start')
   }
 
   // overrideable
-  protected onConnect() {
-    this.emit('connect')
+  protected onStop() {
+    this._client = undefined
+    this.emit('stop')
+  }
+
+  // overrideable
+  protected onRequest(uuid: string, data: string | Uint8Array) {
+    this.emit('request', data, uuid)
+  }
+
+  // overrideable
+  protected onResponse(uuid: string, data: any) {
+    this.emit('response', data, uuid)
   }
 
   // overrideable

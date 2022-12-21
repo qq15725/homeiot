@@ -4,7 +4,7 @@ import { Device } from './device'
 import type { BaseDiscoveryEvents } from '@homeiot/shared'
 
 export type DiscoveryEvents = BaseDiscoveryEvents & {
-  didDiscoverDevice: (device: Device) => void
+  device: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -75,7 +75,7 @@ export class Discovery extends BaseDiscovery {
 
     const [host, port] = info.location.split('//')[1].split(':')
 
-    this.emit('didDiscoverDevice', new Device({
+    this.emit('device', new Device({
       ...info,
       host,
       port: Number(port),

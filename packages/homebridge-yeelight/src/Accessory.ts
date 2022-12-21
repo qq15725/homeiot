@@ -24,7 +24,7 @@ export class Accessory extends BaseAccessory {
 
     device
       .on('error', err => platform.log.error(err))
-      .on('connect', () => platform.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
+      .on('start', () => platform.log.debug('[connect]', `${ name } ${ device.host }:${ device.port }`))
       .on('request', data => platform.log.debug('[request]', data))
       .on('response', data => platform.log.debug('[response]', data))
 

@@ -31,8 +31,8 @@ import { Discovery } from '@homeiot/aqara'
 
 new Discovery()
   .on('error', err => console.error(err))
-  .on('didFinishLaunching', () => console.debug('Local discovery started'))
-  .on('didDiscoverDevice', device => console.debug(device))
+  .on('start', () => console.debug('Local discovery started'))
+  .on('device', device => console.debug(device))
   .start()
 ```
 

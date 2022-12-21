@@ -32,24 +32,27 @@ import type { Device } from '@homeiot/yeelight'
 
 new Discovery()
   .on('error', err => console.error(err))
-  .on('didFinishLaunching', () => console.debug('Local discovery started'))
-  .on('didDiscoverDevice', onDidDiscoverDevice)
+  .on('start', () => console.log('Local discovery started'))
+  .on('stop', () => console.log('Local discovery stoped'))
+  .on('device', (device: Device) => {
+    // 智能 LED 被打开
+    device.power = 'on'
+  })
   .start()
-
-function onDidDiscoverDevice(device: Device) {
-  // 智能 LED 被打开
-  device.power = 'on'
-  // 设置亮度百分比。范围 1 ~ 100
-  device.bright = 50
-}
 ```
 
-### 指定的本地设备连接
+### 控制本地设备
 
 ```ts
 import { Device } from '@homeiot/yeelight'
 
 const device = new Device({ host: '192.168.1.239' })
+  .on('error', err => console.error(err))
+  .on('start', () => console.log('Local device started'))
+  .on('stop', () => console.log('Local device stoped'))
+  .on('request', data => console.log('[request]', data))
+  .on('response', data => console.log('[response]', data))
+
 // 智能 LED 被打开
 device.power = 'on'
 // 设置亮度百分比。范围 1 ~ 100

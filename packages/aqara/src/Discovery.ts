@@ -4,7 +4,7 @@ import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { DeviceInfo } from './Device'
 
 export type DiscoveryEvents = BaseDiscoveryEvents & {
-  didDiscoverDevice: (device: Device) => void
+  device: (device: Device) => void
 }
 
 export class Discovery extends BaseDiscovery {
@@ -32,7 +32,7 @@ export class Discovery extends BaseDiscovery {
 
     switch (cmd) {
       case 'iam':
-        this.emit('didDiscoverDevice', new Device({ ...props } as DeviceInfo))
+        this.emit('device', new Device({ ...props } as DeviceInfo))
         break
     }
   }
