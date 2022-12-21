@@ -206,7 +206,7 @@ export class Device extends BaseDevice {
   }
 
   constructor(info: DeviceInfo) {
-    const { host, port, ...props } = info
+    const { host, port = 55443, ...props } = info
     super(host, port, { type: 'tcp' })
     const parsedModel = parseModel(info.model, info.support)
     this.modelName = parsedModel.modelName

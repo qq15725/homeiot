@@ -128,7 +128,7 @@ export type DeviceProductModel = 'mono'
 
 export interface DeviceInfo extends DeviceProps {
   host: string
-  port: number
+  port?: number
   from?: 'response' | 'notify' | string
   server?: string
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.

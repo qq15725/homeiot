@@ -45,6 +45,18 @@ function onDidDiscoverDevice(device: Device) {
 }
 ```
 
+### Specified local device connection
+
+```ts
+import { Device } from '@homeiot/yeelight'
+
+const device = new Device({ host: '192.168.1.239' })
+// Smart LED is turned on
+device.power = 'on'
+// Brightness percentage. Range 1 ~ 100
+device.bright = 50
+```
+
 ## Official documentation
 
 [Yeelight WiFi Light Inter-Operation Specification](https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf)

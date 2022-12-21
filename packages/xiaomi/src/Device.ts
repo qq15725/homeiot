@@ -25,8 +25,8 @@ export class Device extends BaseDevice {
   }
 
   constructor(info: DeviceInfo) {
-    const { host, ...props } = info
-    super(host, 54321, { type: 'udp4' })
+    const { host, port = 54321, ...props } = info
+    super(host, port, { type: 'udp4' })
     this.setAttributes(props)
   }
 

@@ -45,6 +45,18 @@ function onDidDiscoverDevice(device: Device) {
 }
 ```
 
+### 指定的本地设备连接
+
+```ts
+import { Device } from '@homeiot/yeelight'
+
+const device = new Device({ host: '192.168.1.239' })
+// 智能 LED 被打开
+device.power = 'on'
+// 设置亮度百分比。范围 1 ~ 100
+device.bright = 50
+```
+
 ## 官方文档
 
 [Yeelight WiFi Light Inter-Operation Specification](https://www.yeelight.com/download/Yeelight_Inter-Operation_Spec.pdf)
