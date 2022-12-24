@@ -36,7 +36,6 @@ export abstract class MiIOClient extends Client {
           `userId=${ userId }`,
           `yetAnotherServiceToken=${ serviceToken }`,
           `serviceToken=${ serviceToken }`,
-          // `PassportDeviceId=${ deviceId }`,
           `locale=${ locale }`,
           'channel=MI_APP_STORE',
         ].join('; '),

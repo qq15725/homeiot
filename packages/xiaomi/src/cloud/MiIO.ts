@@ -1,21 +1,21 @@
 import { MiIOClient } from './MiIOClient'
 
 export class MiIO extends MiIOClient {
-  public call(did: number, method: string, params: any) {
+  public call(did: number | string, method: string, params: any) {
     return this.request(`/home/rpc/${ did }`, {
       id: 1, method, params, accessKey: 'IOS00026747c5acafc2',
     })
   }
 
-  public getProps(did: number, keys: string[]) {
+  public getProps(did: number | string, keys: string[]) {
     return this.call(did, 'get_prop', keys)
   }
 
-  public getProp(did: number, key: string) {
+  public getProp(did: number | string, key: string) {
     return this.getProps(did, [key]).then(res => res[0])
   }
 
-  public setProp(did: number, key: string, value: any) {
+  public setProp(did: number | string, key: string, value: any) {
     return this.call(did, `set_${ key }`, Array.isArray(value) ? value : [value])
   }
 
@@ -24,7 +24,7 @@ export class MiIO extends MiIOClient {
     getHuamiDevices?: 0 | 1
     get_split_device?: boolean
     support_smart_home?: boolean
-    dids?: string[]
+    dids?: (number | string)[]
   }) {
     return this.request('/home/device_list', {
       getVirtualModel: true,
@@ -32,7 +32,11 @@ export class MiIO extends MiIOClient {
       get_split_device: false,
       support_smart_home: true,
       ...options,
-    }).then(result => result.list)
+    }).then(res => res.list)
+  }
+
+  public getDevice(did: number | string) {
+    return this.getDevices({ dids: [did] }).then(res => res[0])
   }
 
   public getHome(options?: {
@@ -41,6 +45,6 @@ export class MiIO extends MiIOClient {
     return this.request('/homeroom/gethome', {
       fetch_share_dev: false,
       ...options,
-    }).then(result => result.homelist)
+    }).then(res => res.homelist)
   }
 }

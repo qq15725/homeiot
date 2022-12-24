@@ -37,7 +37,7 @@ export class Cloud {
     this.config = {
       username: null,
       password: null,
-      useEncrypt: false,
+      useEncrypt: true,
       locale: 'en',
       accessTokens: {},
       userAgent: `Android-7.1.1-1.0.0-ONEPLUS A3010-136-${ randomString(13, 'ABCDEF') } APP/xiaomi.smarthome APPV/62830`,

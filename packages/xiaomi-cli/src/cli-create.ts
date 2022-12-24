@@ -49,26 +49,39 @@ export function createCli(
     })
 
   cli
-    .command('spec <model>', 'MIoT spec')
-    .action(async (model) => {
-      consola.success(await cloud.miotSpec.find(model))
-      // 570588160
-    })
-
-  cli
-    .command('<did> <key> [value]', 'Call set/get props')
+    .command('<did> [key] [value]', 'Call device set/get props from xiaomi cloud')
     .action(async (did, key, value) => {
-      const [key1, key2 = 1] = key.split('-')
-      const siid = Number(key1)
-      if (isNaN(siid)) {
-        if (value) {
-          consola.success(await cloud.miio.setProp(did, key1, value))
+      if (key === undefined) {
+        if (isNaN(Number(did))) {
+          return consola.success(await cloud.miotSpec.find(did))
         } else {
-          consola.success(await cloud.miio.getProp(did, key1))
+          return consola.success(await cloud.miio.getDevice(did))
+        }
+      }
+      if (key === 'spec') {
+        return consola.success(
+          await cloud.miotSpec.find(
+            (await cloud.miio.getDevice(did)).model,
+          ),
+        )
+      }
+      did = Number(did)
+      if (value !== undefined) {
+        if (!isNaN(Number(value))) value = Number(value)
+        if (value === 'true') value = true
+        if (value === 'false') value = false
+      }
+      const [key1, key2 = 1] = key.split('.')
+      if (isNaN(Number(key1))) {
+        if (value !== undefined) {
+          consola.success(await cloud.miio.setProp(did, key, value))
+        } else {
+          consola.success(await cloud.miio.getProp(did, key))
         }
       } else {
+        const siid = Number(key1)
         const piid = Number(key2)
-        if (value) {
+        if (value !== undefined) {
           consola.success(await cloud.miot.setProp(did, [siid, piid], value))
         } else {
           consola.success(await cloud.miot.getProp(did, [siid, piid]))
