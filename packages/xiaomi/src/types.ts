@@ -1,22 +1,21 @@
-// local
-
-export interface DeviceInfo {
-  id: string
-  host: string
-  port?: number
-  token?: string
-  serverStamp?: number
-  serverStampTime?: number
-}
-
 // miio
 
 export interface DecodedPacket {
-  deviceId: number
+  did: number
   stamp: number
   checksum: Buffer
   encrypted: Buffer
   decrypted?: string
+}
+
+// local
+
+export interface DeviceInfo {
+  did: number
+  stamp?: number
+  host: string
+  port?: number
+  token?: string
 }
 
 // miot
@@ -63,12 +62,3 @@ export interface SpecificationType {
 export type InstanceProperties = Record<string, {
   siid: number
 } & Property>
-
-// cloud
-
-export interface CloudOptions {
-  username: string
-  password: string
-  country?: 'ru' | 'us' | 'tw' | 'sg' | 'cn' | 'de' | 'in' | 'i2' | string
-  locale?: 'cn' | 'de' | 'i2' | 'ru' | 'sg' | 'us' | string
-}

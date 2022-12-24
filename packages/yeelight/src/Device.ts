@@ -229,14 +229,13 @@ export class Device extends BaseDevice {
 
   constructor(info: DeviceInfo) {
     const { host, port = 55443, ...props } = info
-    super(host, port, { type: 'tcp' })
+    super(host, port, props, { type: 'tcp' })
     const model = parseModel(info.model, info.support)
     this.modelName = model.modelName
     this.supportColorTemperature = model.supportColorTemperature as any
     this.supportNightLight = model.supportNightLight
     this.supportBackgroundLight = model.supportBackgroundLight
     this.supportColor = model.supportColor
-    this.setAttributes(props)
   }
 
   public call(method: string, params: any[] = []): Promise<any> {

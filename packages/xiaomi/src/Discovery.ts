@@ -1,6 +1,6 @@
 import { BaseDiscovery } from '@homeiot/shared'
 import { Device } from './Device'
-import { createHelloPacket, decodePacket } from './miio'
+import { MiIO } from './MiIO'
 import type { BaseDiscoveryEvents } from '@homeiot/shared'
 import type { RemoteInfo } from 'node:dgram'
 
@@ -9,27 +9,22 @@ export type DiscoveryEvents = BaseDiscoveryEvents & {
 }
 
 export class Discovery extends BaseDiscovery {
+  protected miIO = new MiIO()
+
   constructor() {
     super(
       '255.255.255.255', 54321,
-      createHelloPacket(),
+      MiIO.helloPacket,
     )
   }
 
   protected onMessage(packet: Buffer, remote: RemoteInfo) {
     const { address: host } = remote
-    const { deviceId, checksum, stamp, encrypted } = decodePacket(packet)
-
+    const { did, checksum, stamp, encrypted } = this.miIO.decode(packet)!
     if (!stamp || encrypted.length > 0) return
-
-    this.emit('device', new Device({
-      host,
-      id: String(deviceId),
-      token: checksum.toString('hex').match(/^[fF0]+$/)
-        ? undefined
-        : checksum.toString(),
-      serverStamp: Number(stamp.toString()),
-      serverStampTime: Date.now(),
-    }))
+    const token = checksum.toString('hex').match(/^[fF0]+$/)
+      ? undefined
+      : checksum.toString()
+    this.emit('device', new Device({ did, stamp, host, token }))
   }
 }

@@ -27,6 +27,7 @@ export abstract class BaseDevice extends EventEmitter {
   constructor(
     public readonly host: string,
     public readonly port: number,
+    attributes?: Record<string, any>,
     private readonly _options?: {
       type?: 'tcp' | 'udp4' | 'udp6'
       retries?: number
@@ -38,6 +39,7 @@ export abstract class BaseDevice extends EventEmitter {
     },
   ) {
     super()
+    attributes && this.setAttributes(attributes)
   }
 
   public getAttribute = (key: string): any | undefined => this._attributes.get(key)

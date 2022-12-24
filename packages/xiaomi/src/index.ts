@@ -1,5 +1,4 @@
-export * from './Cloud'
+export * from './cloud'
 export * from './Device'
 export * from './Discovery'
-export * from './miio'
-export * from './miot'
+export * from './MiIO'

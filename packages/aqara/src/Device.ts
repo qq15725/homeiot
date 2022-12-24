@@ -18,7 +18,7 @@ export class Device extends BaseDevice {
   public password = 'password'
 
   constructor(info: DeviceInfo) {
-    super(info.ip, info.port, { type: 'udp4' })
+    super(info.ip, info.port, {}, { type: 'udp4' })
     this.model = info.model
     this.sid = info.sid
     this.shortId = info.shortId

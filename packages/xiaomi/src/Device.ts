@@ -1,27 +1,26 @@
 import { BaseDevice } from '@homeiot/shared'
-import { decodePacket, encodePacket } from './miio'
+import { MiIO } from './MiIO'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
-  // Device ID ("did")
   public get id(): string {
-    return this.getAttribute('id')
+    return `xiaomi_${ this.did }`
+  }
+
+  public get did(): number {
+    return this.getAttribute('did')
   }
 
   public get token(): string | undefined {
     return this.getAttribute('token')
   }
 
-  public set token(value) {
-    this.setAttribute('token', value)
+  public get stamp(): number | undefined {
+    return this.getAttribute('stamp')
   }
 
-  public get serverStamp(): number | undefined {
-    return this.getAttribute('serverStamp')
-  }
-
-  public get serverStampTime(): number | undefined {
-    return this.getAttribute('serverStampTime')
+  public get timestamp(): number | undefined {
+    return this.getAttribute('timestamp')
   }
 
   public get model(): string | undefined {
@@ -32,10 +31,20 @@ export class Device extends BaseDevice {
     return this.getAttribute('fw_ver')
   }
 
+  public readonly miIO: MiIO
+
   constructor(info: DeviceInfo) {
     const { host, port = 54321, ...props } = info
-    super(host, port, { type: 'udp4' })
-    this.setAttributes(props)
+    super(host, port, props, { type: 'udp4' })
+    if (this.stamp) {
+      this.setAttribute('timestamp', Date.now())
+    }
+    this.miIO = new MiIO(this.did, this.token)
+  }
+
+  public setToken(token: string) {
+    this.setAttribute('token', token)
+    this.miIO.setToken(token)
   }
 
   public call(method: string, params: any = [], options?: { deconnect: boolean }): Promise<any> {
@@ -45,38 +54,28 @@ export class Device extends BaseDevice {
   }
 
   public send(data: string) {
-    if (!this.token) {
+    const packet = this.miIO.encode(
+      data,
+      this.stamp && this.timestamp
+        ? this.stamp + Math.floor((Date.now() - this.timestamp) / 1000)
+        : undefined,
+    )
+    if (!packet) {
       return Promise.reject(new Error('Token is required to call method'))
     }
-    return super.send(
-      encodePacket(
-        data,
-        Number(this.id),
-        this.token,
-        this.serverStamp && this.serverStampTime
-          ? this.serverStamp + Math.floor((Date.now() - this.serverStampTime) / 1000)
-          : undefined,
-      ),
-    )
+    return super.send(packet)
   }
 
   protected onMessage(packet: Buffer) {
-    if (!this.token) return
-
-    const data = decodePacket(packet, this.token)
-
-    if (!data.encrypted.length) return
-
+    const data = this.miIO.decode(packet)
+    if (!data || !data.encrypted.length) return
     if (data.stamp > 0) {
-      this.setAttribute('serverStamp', data.stamp)
-      this.setAttribute('serverStampTime', Date.now())
+      this.setAttribute('stamp', data.stamp)
+      this.setAttribute('timestamp', Date.now())
     }
-
     if (!data.decrypted) return
-
     const message = JSON.parse(data.decrypted)
     const id = String(message.id)
-
     if ('id' in message && 'result' in message) {
       this.getWaitingRequest(id)?.resolve(message)
     } else if (

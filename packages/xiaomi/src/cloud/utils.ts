@@ -1,6 +1,4 @@
-import type { Response } from 'node-fetch'
-
-export function randomString(length: number, charset: string) {
+export function randomString(length: number, charset = 'ABCDEF') {
   let result = ''
   const charsetLen = charset.length
   for (let i = 0; i < length; i++) {
@@ -58,14 +56,5 @@ export class CryptRC4 {
 
   decode(data: string) {
     return this.crypt(Buffer.from(data, 'base64')).toString('utf8')
-  }
-}
-
-export class ResponseStatusError extends Error {
-  constructor(
-    public readonly response: Response,
-  ) {
-    super(`Response status error ${ response.status } ${ response.statusText }`)
-    this.name = 'ResponseStatusError'
   }
 }
