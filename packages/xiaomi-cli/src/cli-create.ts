@@ -74,7 +74,7 @@ export function createCli(
       const piid = Number(key2)
       const iid = `${ siid }.${ piid }`
       if (args.length) {
-        consola.success(await cloud.miot.action(did, iid, args.filter((v: string) => v !== '-')))
+        consola.success(await cloud.miot.action(did, iid, args.filter((v: string) => v !== '_')))
       } else {
         let propValue = value
         if (!isNaN(Number(propValue))) propValue = Number(propValue)

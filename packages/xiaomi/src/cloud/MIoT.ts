@@ -41,7 +41,9 @@ export class MIoT extends MiIOClient {
   public async action(did: number | string, iid: string, args: any[]) {
     const { siid, piid } = this.resovleIid(iid)
     const result = await this.request('/miotspec/action', {
-      did: String(did), siid, aiid: piid, in: args,
+      params: {
+        did: String(did), siid, aiid: piid, in: args,
+      },
     })
     this.catchError(result.code)
     return result
