@@ -1,27 +1,49 @@
 import { MiIOClient } from './MiIOClient'
 
 export class MIoT extends MiIOClient {
-  public getProps(did: number | string, iids: [number, number][]) {
+  protected resovleIid(iid: string) {
+    const [siid, piid] = iid
+      .replace(/^0\./, '')
+      .split('.')
+    return { siid: Number(siid), piid: Number(piid) }
+  }
+
+  public getProps(did: number | string, iids: string[]) {
     return this.request('/miotspec/prop/get', {
-      params: iids.map(val => ({ did: String(did), siid: val[0], piid: val[1] })),
+      params: iids.map(iid => {
+        const { siid, piid } = this.resovleIid(iid)
+        return { did: String(did), siid, piid }
+      }),
     })
   }
 
-  public getProp(did: number | string, iid: [number, number]) {
-    return this.getProps(did, [iid]).then(val => val[0])
+  public async getProp(did: number | string, iid: string) {
+    const result = await this.getProps(did, [iid]).then(res => res[0])
+    this.catchError(result.code)
+    return result
   }
 
-  public setProps(did: number | string, props: [number, number, any][]) {
+  public setProps(did: number | string, props: [string, any][]) {
     return this.request('/miotspec/prop/set', {
-      params: props.map(val => ({ did: String(did), siid: val[0], piid: val[1], value: val[2] })),
+      params: props.map(val => {
+        const { siid, piid } = this.resovleIid(val[0])
+        return { did: String(did), siid, piid, value: val[1] }
+      }),
     })
   }
 
-  public setProp(did: number | string, iid: [number, number], value: any) {
-    return this.setProps(did, [[...iid, value]]).then(res => res[0])
+  public async setProp(did: number | string, iid: string, value: any) {
+    const result = await this.setProps(did, [[iid, value]]).then(res => res[0])
+    this.catchError(result.code)
+    return result
   }
 
-  public action(params: Record<string, any>) {
-    return this.request('/miotspec/action', { params })
+  public async action(did: number | string, iid: string, args: any[]) {
+    const { siid, piid } = this.resovleIid(iid)
+    const result = await this.request('/miotspec/action', {
+      did: String(did), siid, aiid: piid, in: args,
+    })
+    this.catchError(result.code)
+    return result
   }
 }

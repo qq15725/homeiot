@@ -49,16 +49,16 @@ export function createCli(
     })
 
   cli
-    .command('<did> [key] [value]', 'Call device set/get props from xiaomi cloud')
-    .action(async (did, key, value) => {
-      if (key === undefined) {
+    .command('<did> [flag] [...args]', 'Call device set/get props from xiaomi cloud')
+    .action(async (did, flag, args) => {
+      if (flag === undefined) {
         if (isNaN(Number(did))) {
           return consola.success(await cloud.miotSpec.find(did))
         } else {
           return consola.success(await cloud.miio.getDevice(did))
         }
       }
-      if (key === 'spec') {
+      if (flag === 'spec') {
         return consola.success(
           await cloud.miotSpec.find(
             (await cloud.miio.getDevice(did)).model,
@@ -66,25 +66,32 @@ export function createCli(
         )
       }
       did = Number(did)
-      if (value !== undefined) {
-        if (!isNaN(Number(value))) value = Number(value)
-        if (value === 'true') value = true
-        if (value === 'false') value = false
-      }
+      const [key, value] = flag.split('=')
       const [key1, key2 = 1] = key.split('.')
-      if (isNaN(Number(key1))) {
-        if (value !== undefined) {
-          consola.success(await cloud.miio.setProp(did, key, value))
-        } else {
-          consola.success(await cloud.miio.getProp(did, key))
-        }
+      const isStringKey = isNaN(Number(key1))
+      const hasValue = value !== undefined
+      const siid = Number(key1)
+      const piid = Number(key2)
+      const iid = `${ siid }.${ piid }`
+      if (args.length) {
+        consola.success(await cloud.miot.action(did, iid, args.filter((v: string) => v !== '-')))
       } else {
-        const siid = Number(key1)
-        const piid = Number(key2)
-        if (value !== undefined) {
-          consola.success(await cloud.miot.setProp(did, [siid, piid], value))
+        let propValue = value
+        if (!isNaN(Number(propValue))) propValue = Number(propValue)
+        if (propValue === 'true') propValue = true
+        if (propValue === 'false') propValue = false
+        if (isStringKey) {
+          if (hasValue) {
+            consola.success(await cloud.miio.setProp(did, key, propValue))
+          } else {
+            consola.success(await cloud.miio.getProp(did, key))
+          }
         } else {
-          consola.success(await cloud.miot.getProp(did, [siid, piid]))
+          if (hasValue) {
+            consola.success(await cloud.miot.setProp(did, iid, propValue))
+          } else {
+            consola.success(await cloud.miot.getProp(did, iid))
+          }
         }
       }
     })
