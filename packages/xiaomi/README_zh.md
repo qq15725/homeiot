@@ -24,40 +24,23 @@ pnpm add @homeiot/xiaomi
 
 ## 使用
 
-### 发现本地设备
+### 发现局域网设备
 
 ```ts
-import { Discovery, Api } from '@homeiot/xiaomi'
+import { Discovery } from '@homeiot/xiaomi'
 
-new Api('xiaomi-user-name', 'password')
-  .getDevices()
-  .then(devices => {
-    const didDevices = devices.reduce(
-      (device, map) => ({ ...map, [Number(device.did)]: device.token }),
-      {} as Record<number, any>,
-    )
-
-    new Discovery(didDevices)
-      .on('error', err => console.error(err))
-      .on('start', () => console.debug('Local discovery started'))
-      .on('device', device => console.debug(device))
-      .start()
+new Discovery()
+  .on('error', err => console.error(err))
+  .on('start', () => console.log('局域网发现已启动'))
+  .on('stop', () => console.log('局域网发现已停止'))
+  .on('device', (device: Device) => {
+    device.setToken('The token for the device')
+    device.miIoInfo()
   })
+  .start()
 ```
 
 ## 官方文档
 
-### miIO 二进制协议
-
-[OpenMiHome/mihome-binary-protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
-
-### MIoT 规范
-
-[MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)
-
-- [所有设备](http://miot-spec.org/miot-spec-v2/spec/devices)
-- [所有服务](http://miot-spec.org/miot-spec-v2/spec/services)
-- [所有属性](http://miot-spec.org/miot-spec-v2/spec/properties)
-- [所有动作](http://miot-spec.org/miot-spec-v2/spec/actions)
-- [所有事件](http://miot-spec.org/miot-spec-v2/spec/events)
-- [所有实例](http://miot-spec.org/miot-spec-v2/instances?status=all)
+- [miIO-Binary-Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
+- [MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)

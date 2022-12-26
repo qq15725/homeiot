@@ -24,7 +24,7 @@ pnpm add @homeiot/yeelight
 
 ## Usage
 
-### Discover local device
+### Discover LAN device
 
 ```ts
 import { Discovery } from '@homeiot/yeelight'
@@ -32,8 +32,8 @@ import type { Device } from '@homeiot/yeelight'
 
 new Discovery()
   .on('error', err => console.error(err))
-  .on('start', () => console.log('Local discovery started'))
-  .on('stop', () => console.log('Local discovery stoped'))
+  .on('start', () => console.log('LAN discovery started'))
+  .on('stop', () => console.log('LAN discovery stoped'))
   .on('device', (device: Device) => {
     // Smart LED is turned on
     device.power = 'on'
@@ -41,15 +41,15 @@ new Discovery()
   .start()
 ```
 
-### Control local device
+### Control LAN device
 
 ```ts
 import { Device } from '@homeiot/yeelight'
 
 const device = new Device({ host: '192.168.1.239' })
   .on('error', err => console.error(err))
-  .on('start', () => console.log('Local device started'))
-  .on('stop', () => console.log('Local device stoped'))
+  .on('start', () => console.log('LAN device started'))
+  .on('stop', () => console.log('LAN device stoped'))
   .on('request', data => console.log('[request]', data))
   .on('response', data => console.log('[response]', data))
 

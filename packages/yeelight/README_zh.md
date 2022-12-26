@@ -24,7 +24,7 @@ pnpm add @homeiot/yeelight
 
 ## 使用
 
-### 发现本地设备
+### 发现局域网设备
 
 ```ts
 import { Discovery } from '@homeiot/yeelight'
@@ -32,8 +32,8 @@ import type { Device } from '@homeiot/yeelight'
 
 new Discovery()
   .on('error', err => console.error(err))
-  .on('start', () => console.log('Local discovery started'))
-  .on('stop', () => console.log('Local discovery stoped'))
+  .on('start', () => console.log('局域网发现已启动'))
+  .on('stop', () => console.log('局域网发现已停止'))
   .on('device', (device: Device) => {
     // 智能 LED 被打开
     device.power = 'on'
@@ -41,17 +41,17 @@ new Discovery()
   .start()
 ```
 
-### 控制本地设备
+### 控制局域网设备
 
 ```ts
 import { Device } from '@homeiot/yeelight'
 
 const device = new Device({ host: '192.168.1.239' })
   .on('error', err => console.error(err))
-  .on('start', () => console.log('Local device started'))
-  .on('stop', () => console.log('Local device stoped'))
-  .on('request', data => console.log('[request]', data))
-  .on('response', data => console.log('[response]', data))
+  .on('start', () => console.log('局域网设备已连接'))
+  .on('stop', () => console.log('局域网设备已断开'))
+  .on('request', data => console.log('[请求]', data))
+  .on('response', data => console.log('[响应]', data))
 
 // 智能 LED 被打开
 device.power = 'on'

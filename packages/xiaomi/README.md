@@ -24,40 +24,23 @@ pnpm add @homeiot/xiaomi
 
 ## Usage
 
-### Discover local device
+### Discover LAN device
 
 ```ts
-import { Discovery, Api } from '@homeiot/xiaomi'
+import { Discovery } from '@homeiot/xiaomi'
 
-new Api('xiaomi-user-name', 'password')
-  .getDevices()
-  .then(devices => {
-    const didDevices = devices.reduce(
-      (device, map) => ({ ...map, [Number(device.did)]: device.token }),
-      {} as Record<number, any>,
-    )
-
-    new Discovery(didDevices)
-      .on('error', err => console.error(err))
-      .on('start', () => console.debug('Local discovery started'))
-      .on('device', device => console.debug(device))
-      .start()
+new Discovery()
+  .on('error', err => console.error(err))
+  .on('start', () => console.log('LAN discovery started'))
+  .on('stop', () => console.log('LAN discovery stoped'))
+  .on('device', (device: Device) => {
+    device.setToken('The token for the device')
+    device.miIoInfo()
   })
+  .start()
 ```
 
 ## Official documentation
 
-### miIO Binary Protocol
-
-[OpenMiHome/mihome-binary-protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
-
-### MIoT
-
-[MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)
-
-- [devices](http://miot-spec.org/miot-spec-v2/spec/devices)
-- [services](http://miot-spec.org/miot-spec-v2/spec/services)
-- [properties](http://miot-spec.org/miot-spec-v2/spec/properties)
-- [actions](http://miot-spec.org/miot-spec-v2/spec/actions)
-- [events](http://miot-spec.org/miot-spec-v2/spec/events)
-- [instances](http://miot-spec.org/miot-spec-v2/instances?status=all)
+- [miIO-Binary-Protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
+- [MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)
