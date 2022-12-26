@@ -3,13 +3,15 @@ import fs from 'node:fs'
 import os from 'node:os'
 import { cac } from 'cac'
 import { Cloud, Discovery } from '@homeiot/xiaomi'
-import consola, { FancyReporter } from 'consola'
+import consola from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput } from './password'
 import { cache } from './cache'
 import { cloudDeviceFormat, localDeviceFormat, specFormat } from './formats'
 import { lookupFile, normalizePath } from './utils'
 import type { Device } from '@homeiot/xiaomi'
+
+const { FancyReporter } = consola as any
 
 consola.setReporters([
   new FancyReporter({
