@@ -25,7 +25,7 @@ export class MiIO extends MiIOClient {
     get_split_device?: boolean
     support_smart_home?: boolean
     dids?: (number | string)[]
-  }) {
+  }): Promise<Record<string, any>[]> {
     return this.request('/home/device_list', {
       getVirtualModel: true,
       getHuamiDevices: 1,
@@ -35,8 +35,8 @@ export class MiIO extends MiIOClient {
     }).then(res => res.list)
   }
 
-  public getDevice(did: number | string) {
-    return this.getDevices({ dids: [did] }).then(res => res[0])
+  public getDevice(did: number | string): Promise<Record<string, any>> {
+    return this.getDevices({ dids: [String(did)] }).then(res => res[0])
   }
 
   public getHome(options?: {

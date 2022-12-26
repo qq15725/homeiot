@@ -1,7 +1,6 @@
 import { stringify } from 'node:querystring'
 import { createHash } from 'node:crypto'
 import fetch from 'node-fetch'
-import { AccessToken } from './AccessToken'
 import { AccountClient } from './AccountClient'
 
 export class Account extends AccountClient {
@@ -73,11 +72,12 @@ export class Account extends AccountClient {
     if (!serviceToken) {
       throw new Error('Login failed missing serviceToken')
     }
-    this.config.accessTokens[sid] = new AccessToken(
+    const { userAgent, deviceId } = this.config
+    this.config.accessTokens[sid] = {
+      ...res,
       serviceToken,
-      res,
-      this.config.userAgent,
-      this.config.deviceId,
-    )
+      userAgent,
+      deviceId,
+    }
   }
 }

@@ -27,7 +27,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "xiaomi": "./bin/xiaomi.mjs"
+    "miot": "./bin/miot.mjs"
   },
   "files": [
     "bin",
@@ -36,12 +36,13 @@
   "scripts": {
     "stub": "unbuild --stub",
     "build": "unbuild",
-    "xiaomi": "node ./bin/xiaomi.mjs"
+    "miot": "node ./bin/miot.mjs"
   },
   "dependencies": {
     "@homeiot/xiaomi": "workspace:*",
     "cac": "^6.7.14",
-    "consola": "^2.15.3"
+    "consola": "^2.15.3",
+    "dotenv": "^16.0.3"
   },
   "publishConfig": {
     "access": "public"

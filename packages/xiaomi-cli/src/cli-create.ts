@@ -1,8 +1,14 @@
+import path from 'node:path'
+import fs from 'node:fs'
+import os from 'node:os'
 import { cac } from 'cac'
 import { Cloud, Discovery } from '@homeiot/xiaomi'
 import consola, { FancyReporter } from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput } from './password'
+import { cache } from './cache'
+import { cloudDeviceFormat, localDeviceFormat, specFormat } from './formats'
+import { lookupFile, normalizePath } from './utils'
 import type { Device } from '@homeiot/xiaomi'
 
 consola.setReporters([
@@ -11,26 +17,48 @@ consola.setReporters([
   }),
 ])
 
-export function createCli(
+export async function createCli(
+  config: {
+    [key: string]: any
+    cwd: string
+    cacheDir?: string
+  },
   input = process.stdin,
   output = process.stdout,
 ) {
-  const cli = cac('xiaomi')
+  const { cwd, cacheDir: cacheDirOption, ...options } = config
+  const pkgPath = lookupFile(cwd, ['package.json'], { pathOnly: true })
+  const cacheDir = normalizePath(
+    cacheDirOption
+      ? path.resolve(cwd, cacheDirOption)
+      : pkgPath
+        ? path.join(path.dirname(pkgPath), 'node_modules/.miot')
+        : path.join(cwd, '.miot'),
+  )
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true })
+  }
+  const cachePath = path.join(cacheDir, 'access_tokens.json')
+
   const cloud = new Cloud({
+    ...options,
+    accessTokens: JSON.parse((await cache(cachePath)) || '{}'),
     log: consola,
   })
 
+  const cli = cac('miot')
+
+  cli.on('end', () => {
+    cache(cachePath, JSON.stringify(cloud.config.accessTokens))
+  })
+
   cli
-    .command('discover', 'List all devices from local discover')
+    .command('discover', 'Start local area network discover')
     .action(() => {
       new Discovery()
         .on('start', () => consola.start('discovering devices. press ctrl+c to stop.'))
         .on('device', (device: Device) => {
-          consola.success([
-            `Device ID: ${ device.did }`,
-            `Address: ${ device.host }`,
-            `Token: ${ device.token ?? 'Unknown' }`,
-          ].join('\r\n'))
+          consola.log(localDeviceFormat(device))
         })
         .start()
     })
@@ -43,54 +71,63 @@ export function createCli(
     })
 
   cli
-    .command('devices', 'List all devices from xiaomi cloud')
-    .action(async () => {
-      consola.success(await cloud.miio.getDevices())
-    })
+    .command('[did] [iid] [...args]', 'MIoT for xiaomi cloud')
+    .option('-a, --action', 'Execute an action')
+    .option('-r, --raw', 'Output raw content, not formatted content')
+    .example('miot devices')
+    .example('miot did')
+    .example('miot did iid')
+    .example('miot did iid arg')
+    .example('miot did iid arg arg')
+    .example('miot did iid arg -a')
+    .action(async (
+      did: string | undefined,
+      iid: string | undefined,
+      args: string[],
+      options: Record<string, any>,
+    ) => {
+      const { raw: isOutputRaw, action: isAction } = options
 
-  cli
-    .command('<did> [flag] [...args]', 'Call device set/get props from xiaomi cloud')
-    .action(async (did, flag, args) => {
-      if (flag === undefined) {
-        if (isNaN(Number(did))) {
-          return consola.success(await cloud.miotSpec.find(did))
+      if (!did || did === 'devices') {
+        const devices = await cloud.miio.getDevices()
+        if (isOutputRaw) {
+          consola.log(devices)
         } else {
-          return consola.success(await cloud.miio.getDevice(did))
+          devices.map(device => consola.log(cloudDeviceFormat(device)))
         }
-      }
-      if (flag === 'spec') {
-        return consola.success(
-          await cloud.miotSpec.find(
-            (await cloud.miio.getDevice(did)).model,
-          ),
-        )
-      }
-      did = Number(did)
-      const [key, value] = flag.split('=')
-      const [key1, key2 = 1] = key.split('.')
-      const isStringKey = isNaN(Number(key1))
-      const hasValue = value !== undefined
-      const siid = Number(key1)
-      const piid = Number(key2)
-      const iid = `${ siid }.${ piid }`
-      if (args.length) {
-        consola.success(await cloud.miot.action(did, iid, args.filter((v: string) => v !== '_')))
-      } else {
-        let propValue = value
-        if (!isNaN(Number(propValue))) propValue = Number(propValue)
-        if (propValue === 'true') propValue = true
-        if (propValue === 'false') propValue = false
-        if (isStringKey) {
-          if (hasValue) {
-            consola.success(await cloud.miio.setProp(did, key, propValue))
-          } else {
-            consola.success(await cloud.miio.getProp(did, key))
-          }
+      } else if (!iid) {
+        if (isNaN(Number(did))) {
+          const spec = await cloud.miotSpec.find(did)
+          consola.log(isOutputRaw ? spec : specFormat(spec))
         } else {
-          if (hasValue) {
-            consola.success(await cloud.miot.setProp(did, iid, propValue))
+          const device = await cloud.miio.getDevice(did)
+          consola.info(`Device basic information${ os.EOL }`)
+          consola.log(isOutputRaw ? device : cloudDeviceFormat(device))
+          const spec = await cloud.miotSpec.find(device.model)
+          consola.info(`Device specification${ os.EOL }`)
+          consola.log(isOutputRaw ? spec : specFormat(spec))
+          consola.info(`Device specification url https://home.miot-spec.com/spec/${ device.model }`)
+        }
+      } else {
+        if (isAction) {
+          consola.success(await cloud.miot.action(did, iid, args))
+        } else {
+          let value = args[0] as any
+          if (!isNaN(Number(value))) value = Number(value)
+          if (value === 'true') value = true
+          if (value === 'false') value = false
+          if (iid.includes('.')) {
+            if (args.length) {
+              consola.success(await cloud.miot.setProp(did, iid, value))
+            } else {
+              consola.success(await cloud.miot.getProp(did, iid))
+            }
           } else {
-            consola.success(await cloud.miot.getProp(did, iid))
+            if (args.length) {
+              consola.success(await cloud.miio.setProp(did, iid, value))
+            } else {
+              consola.success(await cloud.miio.getProp(did, iid))
+            }
           }
         }
       }

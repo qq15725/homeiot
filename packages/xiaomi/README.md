@@ -51,7 +51,7 @@ new Api('xiaomi-user-name', 'password')
 
 [OpenMiHome/mihome-binary-protocol](https://github.com/OpenMiHome/mihome-binary-protocol/blob/master/doc/PROTOCOL.md)
 
-### MIoT Specification
+### MIoT
 
 [MIoT-Spec](https://iot.mi.com/new/doc/tools-and-resources/design/spec/overall)
 
