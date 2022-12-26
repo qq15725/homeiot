@@ -1,14 +1,14 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
+import { createInterface } from 'node:readline'
 import { cac } from 'cac'
 import { Cloud, Discovery } from '@homeiot/xiaomi'
 import consola from 'consola'
 import { version } from '../package.json'
-import { getPasswordByTerminalInput } from './password'
+import { getPasswordByTerminalInput, lookupFile, normalizePath } from './utils'
 import { cache } from './cache'
 import { cloudDeviceFormat, localDeviceFormat, specFormat } from './formats'
-import { lookupFile, normalizePath } from './utils'
 import type { Device } from '@homeiot/xiaomi'
 
 const { FancyReporter } = consola as any
@@ -58,7 +58,7 @@ export async function createCli(
     .command('discover', 'Start local area network discover')
     .action(() => {
       new Discovery()
-        .on('start', () => consola.start('discovering devices. press ctrl+c to stop.'))
+        .on('start', () => consola.start(`discovering devices. press ctrl+c to stop.${ os.EOL }`))
         .on('device', (device: Device) => {
           consola.log(localDeviceFormat(device))
         })
@@ -66,22 +66,29 @@ export async function createCli(
     })
 
   cli
-    .command('login <username>')
-    .action(async (username) => {
-      const password = await getPasswordByTerminalInput(input, output)
-      consola.log(username, password)
+    .command('login', 'Login xiaomi account')
+    .action(async () => {
+      const readline = createInterface({ input, output })
+      cloud.config.username = await new Promise(resolve => {
+        readline.question('Username:', username => {
+          readline.close()
+          resolve(String(username))
+        })
+      })
+      cloud.config.password = await getPasswordByTerminalInput(input, output)
+      await cloud.account.login('xiaomiio')
+      consola.success('ok')
     })
 
   cli
     .command('[did] [iid] [...args]', 'MIoT for xiaomi cloud')
     .option('-a, --action', 'Execute an action')
     .option('-r, --raw', 'Output raw content, not formatted content')
-    .example('miot devices')
-    .example('miot did')
-    .example('miot did iid')
-    .example('miot did iid arg')
-    .example('miot did iid arg arg')
-    .example('miot did iid arg -a')
+    .example('miot')
+    .example('miot 570588160')
+    .example('miot 570588160 2.1')
+    .example('miot 570588160 2.1 40')
+    .example('miot 570588160 5.3 PlayText -a')
     .action(async (
       did: string | undefined,
       iid: string | undefined,
@@ -112,7 +119,8 @@ export async function createCli(
         }
       } else {
         if (isAction) {
-          consola.success(await cloud.miot.action(did, iid, args))
+          const res = await cloud.miot.action(did, iid, args)
+          consola.success(isOutputRaw ? res : 'ok')
         } else {
           let value = args[0] as any
           if (!isNaN(Number(value))) value = Number(value)
@@ -120,13 +128,16 @@ export async function createCli(
           if (value === 'false') value = false
           if (iid.includes('.')) {
             if (args.length) {
-              consola.success(await cloud.miot.setProp(did, iid, value))
+              const res = await cloud.miot.setProp(did, iid, value)
+              consola.success(isOutputRaw ? res : 'ok')
             } else {
-              consola.success(await cloud.miot.getProp(did, iid))
+              const prop = await cloud.miot.getProp(did, iid)
+              consola.success(isOutputRaw ? prop : prop.value)
             }
           } else {
             if (args.length) {
-              consola.success(await cloud.miio.setProp(did, iid, value))
+              const res = await cloud.miio.setProp(did, iid, value)
+              consola.success(isOutputRaw ? res : 'ok')
             } else {
               consola.success(await cloud.miio.getProp(did, iid))
             }

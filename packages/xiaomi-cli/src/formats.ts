@@ -60,10 +60,10 @@ ${ info.services?.map(serviceFormat).join('\r\n') }
 
 export function localDeviceFormat(info: Record<string, any>) {
   return `
-    did: ${ info.did }
-     ip: ${ info.host }
-  token: ${ info.token ?? 'Unknown' }`
-    .replace(/^\n/, '')
+   ip: ${ info.host }
+  did: ${ info.did }
+token: ${ info.token ?? 'Unknown' }
+`.replace(/^\n/, '')
 }
 
 export function cloudDeviceFormat(info: Record<string, any>) {
