@@ -22,7 +22,9 @@ pnpm add -g homeiot
 
 ## Usage
 
-### By HomeBridge agency to HomeKit
+⚠️ **Current version temporarily unavailable**
+
+### HomeBridge
 
 ```shell
 pnpm add -g homebridge
@@ -45,26 +47,25 @@ Run
 homebridge
 ```
 
-### By Matter Protocol agency to HomeKit
+### TODO
 
-TODO
+- [ ] HomeKit(HomeBridge) Control
+- [ ] Web Control
+- [ ] CLI Control
+- [ ] Supports Matter Protocal
 
-### Web Server
+## Sub Packages
 
-TODO
-
-### CLI
-
-TODO
-
-## Packages
-
-| name                | description              |
-|---------------------|--------------------------|
-| [@homeiot/aqara]    | Aqara LAN control SDK    |
-| [@homeiot/xiaomi]   | XiaoMi LAN control SDK   |
-| [@homeiot/yeelight] | Yeelight LAN control SDK |
+| name                    | description                  |
+|-------------------------|------------------------------|
+| [@homeiot/aqara]        | Aqara LAN control SDK        |
+| [@homeiot/xiaomi]       | XiaoMi LAN/cloud control SDK |
+| [@homeiot/xiaomi-cli]   | XiaoMi LAN/cloud control CLI |
+| [@homeiot/yeelight]     | Yeelight LAN control SDK     |
+| [@homeiot/yeelight-cli] | Yeelight LAN control CLI     |
 
 [@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara
 [@homeiot/xiaomi]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi
+[@homeiot/xiaomi-cli]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi-cli
 [@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight
+[@homeiot/yeelight-cli]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight-cli

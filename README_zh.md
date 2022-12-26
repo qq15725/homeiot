@@ -22,7 +22,9 @@ pnpm add -g homeiot
 
 ## 使用
 
-### 使用 HomeBridge 代理到 HomeKit
+⚠️ **当前版本暂不可用**
+
+### HomeBridge
 
 ```shell
 pnpm add -g homebridge
@@ -45,26 +47,25 @@ pnpm add -g homebridge
 homebridge
 ```
 
-### 使用 Matter 协议代理到 HomeKit
+### TODO
 
-TODO
-
-### Web 服务
-
-TODO
-
-### 命令行控制
-
-TODO
+- [ ] HomeKit(HomeBridge) 控制
+- [ ] Web 控制
+- [ ] 命令行控制
+- [ ] 支持 Matter 协议
 
 ## 子包
 
-| 名字                 | 描述         |
-|--------------------|------------|
-| [@homeiot/aqara]   | 绿米局域网控制 SDK |
-| [@homeiot/xiaomi]   | 小米局域网控制 SDK |
-| [@homeiot/yeelight] | 易来局域网控制 SDK |
+| 名字                 | 描述            |
+|--------------------|---------------|
+| [@homeiot/aqara]   | 绿米局域网控制 SDK   |
+| [@homeiot/xiaomi]   | 小米局域网/云控制 SDK |
+| [@homeiot/xiaomi-cli] | 小米局域网/云控制 CLI |
+| [@homeiot/yeelight] | 易来局域网控制 SDK   |
+| [@homeiot/yeelight-cli] | 易来局域网控制 CLI   |
 
 [@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara/README_zh.md
-[@homeiot/xiaomi]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi
+[@homeiot/xiaomi]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi/README_zh.md
+[@homeiot/xiaomi-cli]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi-cli/README_zh.md
 [@homeiot/yeelight]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight/README_zh.md
+[@homeiot/yeelight-cli]: https://github.com/qq15725/homeiot/blob/master/packages/yeelight-cli/README_zh.md
