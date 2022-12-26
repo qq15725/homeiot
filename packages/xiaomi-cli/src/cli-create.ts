@@ -85,6 +85,7 @@ export async function createCli(
     .option('-a, --action', 'Execute an action')
     .option('-r, --raw', 'Output raw content, not formatted content')
     .example('miot')
+    .example('miot zhimi.airpurifier.ma2')
     .example('miot 570588160')
     .example('miot 570588160 2.1')
     .example('miot 570588160 2.1 40')
