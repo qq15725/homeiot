@@ -12,19 +12,19 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | 中文文档</p>
+<p align="center"><a href="README.md">English</a> | 简体中文</p>
 
 <p align="center">Node.js 下的小米 MIoT/miIO 局域网/公网控制 CLI</p>
 
-## 安装
+## 📦 安装
 
 ```shell
-pnpm add -g @homeiot/xiaomi-cli
+npm install -g @homeiot/xiaomi-cli
 ```
 
-## 使用
+## 🦄 使用
 
-### 公网控制
+### 在公网访问下控制
 
 #### 登录小米账号
 
@@ -165,7 +165,7 @@ Speaker
   miot 57058**** 5.3 "嘿Siri，今天天气如何？" -a
   ```
 
-### 局域网
+### 在局域网下控制
 
 > TODO
 

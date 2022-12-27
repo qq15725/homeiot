@@ -12,17 +12,17 @@
   </a>
 </p>
 
-<p align="center">README | <a href="README_zh.md">中文文档</a></p>
+<p align="center">English | <a href="README_zh.md">简体中文</a></p>
 
 <p align="center">Xiaomi MIoT/miIO LAN/WAN control CLI for Node.js</p>
 
-## Installation
+## 📦 Installation
 
 ```shell
-pnpm add -g @homeiot/xiaomi-cli
+npm install -g @homeiot/xiaomi-cli
 ```
 
-## Usage
+## 🦄 Usage
 
 ### Help
 

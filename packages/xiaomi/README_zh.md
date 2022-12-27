@@ -12,14 +12,14 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | 中文文档</p>
+<p align="center"><a href="README.md">English</a> | 简体中文</p>
 
 <p align="center">Node.js 下的小米 MIoT/miIO 局域网/公网控制 SDK</p>
 
 ## 安装
 
 ```shell
-pnpm add @homeiot/xiaomi
+npm install @homeiot/xiaomi
 ```
 
 ## 使用

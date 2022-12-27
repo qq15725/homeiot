@@ -12,14 +12,14 @@
   </a>
 </p>
 
-<p align="center">README | <a href="README_zh.md">中文文档</a></p>
+<p align="center">English | <a href="README_zh.md">简体中文</a></p>
 
 <p align="center">Xiaomi MIoT/miIO LAN/WAN control SDK for Node.js</p>
 
 ## Installation
 
 ```shell
-pnpm add @homeiot/xiaomi
+npm install @homeiot/xiaomi
 ```
 
 ## Usage

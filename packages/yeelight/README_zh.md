@@ -12,14 +12,14 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | 中文文档</p>
+<p align="center"><a href="README.md">English</a> | 简体中文</p>
 
 <p align="center">Node.js 下的易来局域网控制 SDK</p>
 
 ## 安装
 
 ```shell
-pnpm add @homeiot/yeelight
+npm install @homeiot/yeelight
 ```
 
 ## 使用
