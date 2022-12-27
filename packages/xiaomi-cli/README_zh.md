@@ -35,7 +35,7 @@ miot login
 > 根据提示输入 Username 和 Password
 > ⚠️ 仅此次登录不会存储
 
-#### 查看米家已绑定的设备列表
+#### 查看公网设备列表
 
 ```shell
 miot
@@ -63,9 +63,9 @@ localip: 10.0.0.2
  online: true
 ```
 
-#### 查看设备详情
+#### 查看公网设备详情
 
-> 设备 `did` 是设备 ID
+通过设备 `did` 查询详情
 
 ```shell
 miot 57058****
@@ -134,9 +134,11 @@ Speaker
 ℹ Device specification url https://home.miot-spec.com/spec/xiaomi.wifispeaker.l05b
 ```
 
-#### 操作设备
+#### 控制公网设备
 
-> 留意设备详情中 `Device specification` 下的 `Properties` 和 `Actions`
+留意详情 `Device specification` 下的 `Properties` 和 `Actions`
+
+通过属性或动作的 `iid` 控制公网设备
 
 ##### 查询/修改属性
 
