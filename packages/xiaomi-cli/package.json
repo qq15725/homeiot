@@ -2,7 +2,7 @@
   "name": "@homeiot/xiaomi-cli",
   "version": "0.0.3",
   "packageManager": "pnpm@7.9.0",
-  "description": "",
+  "description": "Xiaomi MIoT/miIO LAN/WAN control CLI for Node.js",
   "author": "wxm",
   "license": "MIT",
   "homepage": "https://github.com/qq15725/homeiot",
@@ -16,7 +16,12 @@
   "engines": {
     "node": ">=14.18.1"
   },
-  "keywords": [],
+  "keywords": [
+    "miot",
+    "miot-cli",
+    "miio",
+    "miio-cli"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.mjs",

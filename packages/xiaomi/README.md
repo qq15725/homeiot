@@ -14,7 +14,7 @@
 
 <p align="center">README | <a href="README_zh.md">中文文档</a></p>
 
-<p align="center">XiaoMi LAN/cloud control SDK for Node.js</p>
+<p align="center">Xiaomi LAN/WAN control SDK for Node.js</p>
 
 ## Installation
 

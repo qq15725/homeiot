@@ -56,13 +56,13 @@ homebridge
 
 ## Sub Packages
 
-| name                    | description                  |
-|-------------------------|------------------------------|
-| [@homeiot/aqara]        | Aqara LAN control SDK        |
-| [@homeiot/xiaomi]       | XiaoMi LAN/cloud control SDK |
-| [@homeiot/xiaomi-cli]   | XiaoMi LAN/cloud control CLI |
-| [@homeiot/yeelight]     | Yeelight LAN control SDK     |
-| [@homeiot/yeelight-cli] | Yeelight LAN control CLI     |
+| name                    | description                          |
+|-------------------------|--------------------------------------|
+| [@homeiot/aqara]        | Aqara LAN control SDK                |
+| [@homeiot/xiaomi]       | Xiaomi MIoT/miIO LAN/WAN control SDK |
+| [@homeiot/xiaomi-cli]   | Xiaomi MIoT/miIO LAN/WAN control CLI |
+| [@homeiot/yeelight]     | Yeelight LAN control SDK             |
+| [@homeiot/yeelight-cli] | Yeelight LAN control CLI             |
 
 [@homeiot/aqara]: https://github.com/qq15725/homeiot/blob/master/packages/aqara
 [@homeiot/xiaomi]: https://github.com/qq15725/homeiot/blob/master/packages/xiaomi

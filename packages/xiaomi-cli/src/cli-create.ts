@@ -66,7 +66,7 @@ export async function createCli(
     })
 
   cli
-    .command('login', 'Login xiaomi account')
+    .command('login', 'Login account for Xiaomi')
     .action(async () => {
       const readline = createInterface({ input, output })
       cloud.config.username = await new Promise(resolve => {
@@ -81,15 +81,17 @@ export async function createCli(
     })
 
   cli
-    .command('[did] [iid] [...args]', 'MIoT for xiaomi cloud')
+    .command('[did] [iid] [...args]', 'MIoT/miIO LAN/WAN control')
+    .option('-l, --lan', 'Use LAN control')
     .option('-a, --action', 'Execute an action')
     .option('-r, --raw', 'Output raw content, not formatted content')
     .example('miot')
+    .example('miot devices')
     .example('miot zhimi.airpurifier.ma2')
-    .example('miot 570588160')
-    .example('miot 570588160 2.1')
-    .example('miot 570588160 2.1 40')
-    .example('miot 570588160 5.3 PlayText -a')
+    .example('miot 570xxxxxx')
+    .example('miot 570xxxxxx 2.1')
+    .example('miot 570xxxxxx 2.1 40')
+    .example('miot 570xxxxxx 5.3 PlayText -a')
     .action(async (
       did: string | undefined,
       iid: string | undefined,
@@ -100,28 +102,33 @@ export async function createCli(
 
       if (!did || did === 'devices') {
         const devices = await cloud.miio.getDevices()
-        if (isOutputRaw) {
-          consola.log(devices)
-        } else {
-          devices.map(device => consola.log(cloudDeviceFormat(device)))
-        }
+        consola.log(isOutputRaw ? devices : devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
       } else if (!iid) {
         if (isNaN(Number(did))) {
           const spec = await cloud.miotSpec.find(did)
           consola.log(isOutputRaw ? spec : specFormat(spec))
         } else {
           const device = await cloud.miio.getDevice(did)
-          consola.info(`Device basic information${ os.EOL }`)
-          consola.log(isOutputRaw ? device : cloudDeviceFormat(device))
           const spec = await cloud.miotSpec.find(device.model)
-          consola.info(`Device specification${ os.EOL }`)
-          consola.log(isOutputRaw ? spec : specFormat(spec))
-          consola.info(`Device specification url https://home.miot-spec.com/spec/${ device.model }`)
+          const specUrl = `https://home.miot-spec.com/spec/${ device.model }`
+          if (isOutputRaw) {
+            consola.log({ device, spec, specUrl })
+          } else {
+            consola.info(`Device basic information${ os.EOL }`)
+            consola.log(cloudDeviceFormat(device) + os.EOL)
+            consola.info(`Device specification${ os.EOL }`)
+            consola.log(specFormat(spec) + os.EOL)
+            consola.info(`Device specification url ${ specUrl }`)
+          }
         }
       } else {
         if (isAction) {
           const res = await cloud.miot.action(did, iid, args)
-          consola.success(isOutputRaw ? res : 'ok')
+          if (isOutputRaw) {
+            consola.log(res)
+          } else {
+            consola.success('ok')
+          }
         } else {
           let value = args[0] as any
           if (!isNaN(Number(value))) value = Number(value)
@@ -130,17 +137,34 @@ export async function createCli(
           if (iid.includes('.')) {
             if (args.length) {
               const res = await cloud.miot.setProp(did, iid, value)
-              consola.success(isOutputRaw ? res : 'ok')
+              if (isOutputRaw) {
+                consola.log(res)
+              } else {
+                consola.success('ok')
+              }
             } else {
               const prop = await cloud.miot.getProp(did, iid)
-              consola.success(isOutputRaw ? prop : prop.value)
+              if (isOutputRaw) {
+                consola.log(prop)
+              } else {
+                consola.success(prop.value)
+              }
             }
           } else {
             if (args.length) {
               const res = await cloud.miio.setProp(did, iid, value)
-              consola.success(isOutputRaw ? res : 'ok')
+              if (isOutputRaw) {
+                consola.log(res)
+              } else {
+                consola.success('ok')
+              }
             } else {
-              consola.success(await cloud.miio.getProp(did, iid))
+              const prop = await cloud.miio.getProp(did, iid)
+              if (isOutputRaw) {
+                consola.log(prop)
+              } else {
+                consola.success(prop)
+              }
             }
           }
         }

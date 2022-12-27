@@ -1,3 +1,5 @@
+import os from 'node:os'
+
 const styles = {
   reset: '\x1B[0m',
   bright: '\x1B[1m',
@@ -28,42 +30,49 @@ function color(source: string, style: keyof typeof styles = 'bright') {
   return `${ styles[style] }${ source }${ styles.reset }`
 }
 
+export function specFormat(info: Record<string, any>) {
+  return [
+    info.description,
+    info.services?.map(serviceFormat).join(os.EOL),
+  ]
+    .filter(Boolean)
+    .join(os.EOL)
+}
+
 export function actionFormat(siid: number, info: Record<string, any>) {
-  return `      ${ color(`${ siid }.${ info.iid }`) } ${ info.description }, ${ info.in.join(' ') || '_' }, ${ info.out.join(' ') || '_' }`
+  return [
+    `${ color(`${ siid }.${ info.iid }`) } ${ info.description }`,
+    info.in.join(' ') || '_',
+    info.out.join(' ') || '_',
+  ].join(', ')
 }
 
 export function propertyFormat(siid: number, info: Record<string, any>) {
-  return `      ${ color(`${ siid }.${ info.iid }`) } ${ info.description }, ${ info.format }, ${ info.access.join(' ') || '_' }`
+  return [
+    `${ color(`${ siid }.${ info.iid }`) } ${ info.description }`,
+    info.format,
+    info.access.join(' ') || '_',
+  ].join(', ')
 }
 
 export function serviceFormat(info: Record<string, any>) {
-  return `  ${ info.iid } ${ info.description }${
-    !info.properties
-      ? ''
-      : `
-    ${ color('Properties', 'grey') }
-${ info.properties?.map((v: any) => propertyFormat(info.iid, v)).join('\r\n') }`
-  }${
-    !info.actions
-      ? ''
-      : `
-    ${ color('Actions', 'grey') }
-${ info.actions?.map((v: any) => actionFormat(info.iid, v)).join('\r\n') }`
-  }`
-}
-
-export function specFormat(info: Record<string, any>) {
-  return `${ info.description }
-${ info.services?.map(serviceFormat).join('\r\n') }
-`
+  return [
+    `  ${ info.iid } ${ info.description }`,
+    info.properties && color('    Properties', 'grey'),
+    info.properties?.map((v: any) => `      ${ propertyFormat(info.iid, v) }`).join(os.EOL),
+    info.actions && color('    Actions', 'grey'),
+    info.actions?.map((v: any) => `      ${ actionFormat(info.iid, v) }`).join(os.EOL),
+  ]
+    .filter(Boolean)
+    .join(os.EOL)
 }
 
 export function localDeviceFormat(info: Record<string, any>) {
   return `
    ip: ${ info.host }
   did: ${ info.did }
-token: ${ info.token ?? 'Unknown' }
-`.replace(/^\n/, '')
+token: ${ info.token ?? 'Unknown' }`
+    .replace(/^\n/, '')
 }
 
 export function cloudDeviceFormat(info: Record<string, any>) {
@@ -73,17 +82,10 @@ export function cloudDeviceFormat(info: Record<string, any>) {
   model: ${ info.model }
   token: ${ info.token }
    ssid: ${ info.ssid }
-localip: ${ info.localip }${
-    !info.prop
-      ? ''
-      : `
-   prop: ${ JSON.stringify(info.prop) }`
-  }${
-    !info.method
-      ? ''
-      : `
- method: ${ JSON.stringify(info.method) }`
-  }
- online: ${ info.isOnline ? color(info.isOnline, 'green') : color(info.isOnline, 'red') }
-`.replace(/^\n/, '')
+localip: ${ info.localip }
+   prop: ${ JSON.stringify(info.prop) }
+ method: ${ JSON.stringify(info.method) }
+ online: ${ info.isOnline ? color(info.isOnline, 'green') : color(info.isOnline, 'red') }`
+    .replace(/^\n/, '')
+    .replace(/.+: undefined\n/g, '')
 }

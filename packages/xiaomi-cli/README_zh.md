@@ -14,7 +14,7 @@
 
 <p align="center"><a href="README.md">README</a> | 中文文档</p>
 
-<p align="center">Node.js 下的小米局域网/云控制 CLI</p>
+<p align="center">Node.js 下的小米 MIoT/miIO 局域网/公网控制 CLI</p>
 
 ## 安装
 
@@ -30,19 +30,19 @@ pnpm add -g @homeiot/xiaomi-cli
 miot --help
 ```
 
-### 发现局域网内所有设备
+### 发现局域网设备
 
 ```shell
 miot discover
 ```
 
-### 登录小米云
+### 登录小米账号
 
 ```shell
 miot login
 ```
 
-### 查询当前登录账号云设备
+### 查询当前米家公网设备
 
 ```shell
 miot

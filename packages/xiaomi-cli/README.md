@@ -14,7 +14,7 @@
 
 <p align="center">README | <a href="README_zh.md">中文文档</a></p>
 
-<p align="center">XiaoMi LAN/cloud control CLI for Node.js</p>
+<p align="center">Xiaomi MIoT/miIO LAN/WAN control CLI for Node.js</p>
 
 ## Installation
 
@@ -30,19 +30,19 @@ pnpm add -g @homeiot/xiaomi-cli
 miot --help
 ```
 
-### Discover LAN devices
+### Discover LAN device
 
 ```shell
 miot discover
 ```
 
-### Login XiaoMi Cloud
+### Login account for Xiaomi
 
 ```shell
 miot login
 ```
 
-### Get XiaoMi Cloud devices
+### Get Xiaomi Cloud devices
 
 ```shell
 miot
