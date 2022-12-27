@@ -26,7 +26,7 @@ pnpm add -g @homeiot/xiaomi-cli
 
 ### 公网控制
 
-1. 登录小米账号
+#### 登录小米账号
 
 ```shell
 miot login
@@ -34,13 +34,13 @@ miot login
 
 > 根据提示输入 Username 和 Password ，⚠️ 不会存储，仅做单次登录。
 
-2. 查看米家已绑定的设备列表
+#### 查看米家已绑定的设备列表
 
 ```shell
 miot
 ```
 
-输出
+输出：
 
 ```shell
     did: 570******
@@ -62,13 +62,13 @@ localip: 10.0.0.2
  online: true
 ```
 
-3. 查看设备详情
+#### 查看设备详情
 
 ```shell
 miot 570******
 ```
 
-输出
+输出：
 
 ```shell
 ℹ Device basic information
@@ -131,33 +131,35 @@ Speaker
 ℹ Device specification url https://home.miot-spec.com/spec/xiaomi.wifispeaker.l05b
 ```
 
-4. 操作设备
+#### 操作设备
 
-> 留意上文 `Device specification`（设备规范）下的 `Properties`（属性）和 `Actions`（动作）
+> 留意设备详情中 `Device specification` 下的 `Properties` 和 `Actions`
 
-查询/修改 `Properties`（属性）
+##### 查询/修改 `Properties`（属性）
 
-> 例如 `2 Speaker` 下的 `2.1 Volume, uint8, read write notify` 即为扬声器的音量的定义
+> 例如 `2.1 Volume, uint8, read write notify` 即为扬声器的音量的定义
 >
 > 此处 `2.1` 即为音量属性的 `iid`
 
-```shell
-# 查询当前音量
-miot 570****** 2.1
-# 改变音量到 80%
-miot 570****** 2.1 80
-```
+- 查询当前音量
+  ```shell
+  miot 570****** 2.1
+  ```
+- 改变音量到 80%
+  ```shell
+  miot 570****** 2.1 80
+  ```
 
-触发 `Actions`（动作）
+##### 触发 `Actions`（动作）
 
-> 例如 `5 Intelligent Speaker` 下的 `5.3 Play Text, 1, _` 即为播放文本方法的定义
+> 例如 `5.3 Play Text, 1, _` 即为播放文本方法的定义
 >
 > 此处 `5.3` 即为播放文本方法的 `iid`
 
-```shell
-# 让小爱同学播放指定文本，-a 代表执行的是方法
-miot 570****** 5.3 "嘿Siri，今天天氣如何？" -a
-```
+- 让小爱同学播放指定文本，`-a` 代表执行的是方法。
+  ```shell
+  miot 570****** 5.3 "嘿Siri，今天天气如何？" -a
+  ```
 
 ### 局域网
 
