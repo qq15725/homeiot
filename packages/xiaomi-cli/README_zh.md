@@ -32,7 +32,8 @@ pnpm add -g @homeiot/xiaomi-cli
 miot login
 ```
 
-> 根据提示输入 Username 和 Password ，⚠️ 不会存储，仅做单次登录。
+> 根据提示输入 Username 和 Password
+> ⚠️ 仅此次登录不会存储
 
 #### 查看米家已绑定的设备列表
 
@@ -43,7 +44,7 @@ miot
 输出：
 
 ```shell
-    did: 570******
+    did: 57058****
    name: Mi AI Speaker Play
   model: xiaomi.wifispeaker.l05b
   token: ********************************
@@ -51,7 +52,7 @@ miot
 localip: 10.0.0.3
  online: true
 
-    did: 460******
+    did: 46066****
    name: 空气净化器
   model: zhimi.airpurifier.ma2
   token: ********************************
@@ -64,8 +65,10 @@ localip: 10.0.0.2
 
 #### 查看设备详情
 
+> 设备 `did` 是设备 ID
+
 ```shell
-miot 570******
+miot 57058****
 ```
 
 输出：
@@ -73,7 +76,7 @@ miot 570******
 ```shell
 ℹ Device basic information
 
-    did: 570******
+    did: 57058****
    name: Mi AI Speaker Play
   model: xiaomi.wifispeaker.l05b
   token: ********************************
@@ -135,41 +138,37 @@ Speaker
 
 > 留意设备详情中 `Device specification` 下的 `Properties` 和 `Actions`
 
-##### 查询/修改 `Properties`（属性）
+##### 查询/修改属性
 
-> 例如 `2.1 Volume, uint8, read write notify` 即为扬声器的音量的定义
->
-> 此处 `2.1` 即为音量属性的 `iid`
+> 例如 `2.1 Volume, uint8, read write notify` 即为扬声器的音量的定义，此处 `2.1` 即为音量属性的 `iid`
 
 - 查询当前音量
   ```shell
-  miot 570****** 2.1
+  miot 57058**** 2.1
   ```
 - 改变音量到 80%
   ```shell
-  miot 570****** 2.1 80
+  miot 57058**** 2.1 80
   ```
 
-##### 触发 `Actions`（动作）
+##### 触发动作
 
-> 例如 `5.3 Play Text, 1, _` 即为播放文本方法的定义
->
-> 此处 `5.3` 即为播放文本方法的 `iid`
+> 例如 `5.3 Play Text, 1, _` 即为播放文本方法的定义，此处 `5.3` 即为播放文本方法的 `iid`
 
-- 让小爱同学播放指定文本，`-a` 代表执行的是方法。
+- 让小爱音响播放指定文本（`-a` 代表执行的是方法）
   ```shell
-  miot 570****** 5.3 "嘿Siri，今天天气如何？" -a
+  miot 57058**** 5.3 "嘿Siri，今天天气如何？" -a
   ```
 
 ### 局域网
 
-1. 发现局域网设备
+> TODO
+
+#### 发现局域网设备
 
 ```shell
 miot discover
 ```
-
-TODO
 
 ## 帮助
 
