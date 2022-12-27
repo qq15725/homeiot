@@ -12,7 +12,7 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | <a href="README_zh.md">中文文档</a></p>
+<p align="center"><a href="README.md">README</a> | 中文文档</p>
 
 ## 安装
 

@@ -12,7 +12,7 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | <a href="README_zh.md">中文文档</a></p>
+<p align="center"><a href="README.md">README</a> | 中文文档</p>
 
 <p align="center">Node.js 下的绿米局域网控制 SDK</p>
 

@@ -12,7 +12,7 @@
   </a>
 </p>
 
-<p align="center"><a href="README.md">README</a> | <a href="README_zh.md">中文文档</a></p>
+<p align="center">README | <a href="README_zh.md">中文文档</a></p>
 
 <p align="center">XiaoMi LAN/cloud control SDK for Node.js</p>
 
