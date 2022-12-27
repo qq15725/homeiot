@@ -22,11 +22,9 @@
 npm install -g @homeiot/xiaomi-cli
 ```
 
-## 🦄 使用
+## ☁️ 在公网访问下使用
 
-### 在公网访问下控制
-
-#### 登录小米账号
+### 登录小米账号
 
 ```shell
 miot login
@@ -38,7 +36,7 @@ miot login
 >
 > ⚠️ 登录后的访问令牌会缓存到 `node_modules/.miot` 下，供后续指令使用
 
-#### 查看公网设备列表
+### 查看设备列表（公网）
 
 ```shell
 miot
@@ -47,31 +45,31 @@ miot
 输出：
 
 ```shell
-    did: 57058****
+    did: 570580000
    name: Mi AI Speaker Play
   model: xiaomi.wifispeaker.l05b
-  token: ********************************
-   ssid: w2.4
-localip: 10.0.0.3
+  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ssid: wifiname
+localip: 192.168.0.2
  online: true
 
-    did: 46066****
+    did: 460660000
    name: 空气净化器
   model: zhimi.airpurifier.ma2
-  token: ********************************
-   ssid: w2.4
-localip: 10.0.0.2
+  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ssid: wifiname
+localip: 192.168.0.3
    prop: {"aqi":"161","mode":"auto","power":"off"}
  method: [{"allow_values":"on off","name":"set_power"}]
  online: true
 ```
 
-#### 查看公网设备详情
+### 查看设备规格（公网）
 
-通过设备 `did` 查询详情
+通过设备 `did` 查询
 
 ```shell
-miot 57058****
+miot 570580000
 ```
 
 输出：
@@ -79,12 +77,12 @@ miot 57058****
 ```shell
 ℹ Device basic information
 
-    did: 57058****
+    did: 570580000
    name: Mi AI Speaker Play
   model: xiaomi.wifispeaker.l05b
-  token: ********************************
-   ssid: w2.4
-localip: 10.0.0.3
+  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ssid: wifiname
+localip: 192.168.0.2
  online: true
 
 ℹ Device specification
@@ -137,43 +135,82 @@ Speaker
 ℹ Device specification url https://home.miot-spec.com/spec/xiaomi.wifispeaker.l05b
 ```
 
-#### 控制公网设备
+### 控制设备（公网）
 
-留意详情 `Device specification` 下的 `Properties` 和 `Actions`
+留意设备规格 `Device specification` 下的 `Properties` 和 `Actions`
 
 通过属性或动作的 `iid` 控制公网设备
 
-##### 查询/修改属性
+#### 查询/修改设备属性
 
 > 例如 `2.1 Volume, uint8, read write notify` 即为扬声器的音量的定义，此处 `2.1` 即为音量属性的 `iid`
 
 - 查询当前音量
   ```shell
-  miot 57058**** 2.1
+  miot 570580000 2.1
   ```
 - 改变音量到 80%
   ```shell
-  miot 57058**** 2.1 80
+  miot 570580000 2.1 80
   ```
 
-##### 触发动作
+#### 触发设备动作
 
 > 例如 `5.3 Play Text, 1, _` 即为播放文本方法的定义，此处 `5.3` 即为播放文本方法的 `iid`
 
 - 让小爱音响播放指定文本（`-a` 代表执行的是方法）
   ```shell
-  miot 57058**** 5.3 "嘿Siri，今天天气如何？" -a
+  miot 570580000 5.3 "嘿Siri，今天天气如何？" -a
   ```
 
-### 在局域网下控制
+## 🔐 在局域网下控制
 
-> TODO
-
-#### 发现局域网设备
+### 发现局域网设备（局域网）
 
 ```shell
 miot discover
 ```
+
+发现设备时输出：
+
+```shell
+   ip: 192.168.0.2
+  did: 570580000
+token: Unknown
+```
+
+### 查看设备规格
+
+可选以下方式查看设备规格
+
+- 通过 [https://home.miot-spec.com](https://home.miot-spec.com) 搜索查看设备规格
+- 通过上文公网访问方式查看设备规格
+
+### 控制设备（局域网）
+
+格式同公网控制，`-l` 是局域网发送指令
+
+#### 查询/修改设备属性
+
+> iid 等于 SIID.PIID
+
+- 查询当前音量
+  ```shell
+  miot -l 570580000 2.1
+  ```
+- 改变音量到 80%
+  ```shell
+  miot -l 570580000 2.1 80
+  ```
+
+#### 触发设备动作
+
+> iid 等于 SIID.AIID
+
+- 让小爱音响播放指定文本（`-a` 代表执行的是方法）
+  ```shell
+  miot -l 570580000 5.3 "嘿Siri，今天天气如何？" -a
+  ```
 
 ## 帮助
 

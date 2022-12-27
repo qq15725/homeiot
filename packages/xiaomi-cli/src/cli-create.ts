@@ -60,7 +60,7 @@ export async function createCli(
       new Discovery()
         .on('start', () => consola.start(`discovering devices. press ctrl+c to stop.${ os.EOL }`))
         .on('device', (device: Device) => {
-          consola.log(localDeviceFormat(device))
+          consola.log(localDeviceFormat(device) + os.EOL)
         })
         .start()
     })
@@ -88,10 +88,10 @@ export async function createCli(
     .example('miot')
     .example('miot devices')
     .example('miot zhimi.airpurifier.ma2')
-    .example('miot 570xxxxxx')
-    .example('miot 570xxxxxx 2.1')
-    .example('miot 570xxxxxx 2.1 40')
-    .example('miot 570xxxxxx 5.3 PlayText -a')
+    .example('miot 570580000')
+    .example('miot 570580000 2.1')
+    .example('miot 570580000 2.1 40')
+    .example('miot 570580000 5.3 PlayText -a')
     .action(async (
       did: string | undefined,
       iid: string | undefined,
