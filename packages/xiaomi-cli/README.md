@@ -35,15 +35,3 @@ miot --help
 ```shell
 miot discover
 ```
-
-### Login account for Xiaomi
-
-```shell
-miot login
-```
-
-### Get Xiaomi Cloud devices
-
-```shell
-miot
-```
