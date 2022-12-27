@@ -10,7 +10,7 @@ export abstract class MiIOClient extends Client {
   protected sid = 'xiaomiio'
   protected baseUri = 'https://api.io.mi.com/app'
   protected get accessToken() {
-    return this.config.accessTokens[this.sid]
+    return this.config.serviceTokens[this.sid]
   }
 
   protected errorCodes = {

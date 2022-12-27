@@ -73,11 +73,12 @@ export class Account extends AccountClient {
       throw new Error('Login failed missing serviceToken')
     }
     const { userAgent, deviceId } = this.config
-    this.config.accessTokens[sid] = {
+    this.config.serviceTokens[sid] = {
       ...res,
       serviceToken,
       userAgent,
       deviceId,
     }
+    this.app.emit('serviceToken', this.config.serviceTokens[sid], sid)
   }
 }

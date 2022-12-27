@@ -1,13 +1,18 @@
-import { access, readFile, writeFile } from 'node:fs/promises'
 import fs from 'node:fs'
+import path from 'node:path'
 
-export async function cache(filename: string, value?: string): Promise<string> {
-  if (await access(filename, fs.constants.F_OK).then(() => true).catch(() => false)) {
-    if (!value) {
-      return await readFile(filename, 'utf8')
-    }
+export function cache(filename: string, value?: Record<string, any>): Record<string, any> {
+  const dir = path.dirname(filename)
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
   }
-  value = value ?? ''
-  await writeFile(filename, value, 'utf8')
-  return value
+  if (!fs.existsSync(filename)) {
+    fs.writeFileSync(filename, '', 'utf8')
+  }
+  if (value) {
+    fs.writeFileSync(filename, JSON.stringify(value), 'utf8')
+    return value
+  } else {
+    return JSON.parse(fs.readFileSync(filename, 'utf8') || '{}')
+  }
 }

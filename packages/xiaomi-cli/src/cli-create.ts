@@ -1,5 +1,4 @@
 import path from 'node:path'
-import fs from 'node:fs'
 import os from 'node:os'
 import { createInterface } from 'node:readline'
 import { cac } from 'cac'
@@ -19,7 +18,7 @@ consola.setReporters([
   }),
 ])
 
-export async function createCli(
+export function createCli(
   config: {
     [key: string]: any
     cwd: string
@@ -37,22 +36,18 @@ export async function createCli(
         ? path.join(path.dirname(pkgPath), 'node_modules/.miot')
         : path.join(cwd, '.miot'),
   )
-  if (!fs.existsSync(cacheDir)) {
-    fs.mkdirSync(cacheDir, { recursive: true })
-  }
-  const cachePath = path.join(cacheDir, 'access_tokens.json')
+  const serviceTokensCachePath = path.join(cacheDir, 'service_tokens.json')
+  const deviceTokensCachePath = path.join(cacheDir, 'device_tokens.json')
 
   const cloud = new Cloud({
     ...options,
-    accessTokens: JSON.parse((await cache(cachePath)) || '{}'),
+    serviceTokens: cache(serviceTokensCachePath),
     log: consola,
+  }).on('serviceToken', () => {
+    cache(serviceTokensCachePath, cloud.config.serviceTokens)
   })
 
   const cli = cac('miot')
-
-  cli.on('end', () => {
-    cache(cachePath, JSON.stringify(cloud.config.accessTokens))
-  })
 
   cli
     .command('discover', 'Start local area network discover')
@@ -77,7 +72,12 @@ export async function createCli(
       })
       cloud.config.password = await getPasswordByTerminalInput(input, output)
       await cloud.account.login('xiaomiio')
-      consola.success('ok')
+      const devices = await cloud.miio.getDevices()
+      consola.log(devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
+      cache(
+        deviceTokensCachePath,
+        devices.reduce((map, device) => ({ ...map, [device.did]: device.token }), {}),
+      )
     })
 
   cli
@@ -103,6 +103,10 @@ export async function createCli(
       if (!did || did === 'devices') {
         const devices = await cloud.miio.getDevices()
         consola.log(isOutputRaw ? devices : devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
+        cache(
+          deviceTokensCachePath,
+          devices.reduce((map, device) => ({ ...map, [device.did]: device.token }), {}),
+        )
       } else if (!iid) {
         if (isNaN(Number(did))) {
           const spec = await cloud.miotSpec.find(did)

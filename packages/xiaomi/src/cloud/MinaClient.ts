@@ -7,7 +7,7 @@ export abstract class MinaClient extends Client {
   protected sid = 'micoapi'
   protected baseUri = 'https://api2.mina.mi.com'
   protected get accessToken() {
-    return this.config.accessTokens[this.sid]
+    return this.config.serviceTokens[this.sid]
   }
 
   protected getRequestInit(init?: RequestInit, context?: Record<string, any>): RequestInit | undefined {

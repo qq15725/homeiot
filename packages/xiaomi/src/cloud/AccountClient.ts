@@ -5,16 +5,16 @@ export abstract class AccountClient extends Client {
   protected baseUri = 'https://account.xiaomi.com/pass'
 
   protected getRequestInit(init?: RequestInit, context?: Record<string, any>): RequestInit | undefined {
-    const accessToken = this.config.accessTokens[context?.sid]
+    const token = this.config.serviceTokens[context?.sid]
     return super.getRequestInit({
       ...init,
       headers: {
-        'User-Agent': accessToken?.userAgent ?? this.config.userAgent,
+        'User-Agent': token?.userAgent ?? this.config.userAgent,
         'Cookie': [
           'sdkVersion=accountsdk-18.8.15',
-          `deviceId=${ accessToken?.deviceId ?? this.config.deviceId }`,
-          `userId=${ accessToken?.userId ?? '' }`,
-          `passToken=${ accessToken?.passToken ?? '' }`,
+          `deviceId=${ token?.deviceId ?? this.config.deviceId }`,
+          `userId=${ token?.userId ?? '' }`,
+          `passToken=${ token?.passToken ?? '' }`,
         ].join('; '),
         ...init?.headers,
       },

@@ -1,10 +1,10 @@
+import EventEmitter from 'events'
 import { randomString } from './utils'
 import { Account } from './Account'
 import { MiIO } from './MiIO'
 import { MIoT } from './MIoT'
 import { Mina } from './Mina'
 import { MIoTSpec } from './MIoTSpec'
-import type { AccessToken } from './AccessToken'
 
 export interface Logger {
   info(message: string, ...parameters: any[]): void
@@ -19,13 +19,23 @@ export interface CloudConfig {
   useEncrypt: boolean
   country?: 'ru' | 'us' | 'tw' | 'sg' | 'cn' | 'de' | 'in' | 'i2' | string
   locale: 'en' | 'cn' | 'de' | 'i2' | 'ru' | 'sg' | 'us' | string
-  accessTokens: Record<string, AccessToken>
+  serviceTokens: Record<string, {
+    userId: number
+    passToken: string
+    ssecurity: string
+    nonce: string
+    location: string
+    notificationUrl: string | undefined
+    serviceToken: string
+    userAgent: string
+    deviceId: string
+  }>
   userAgent: string
   deviceId: string
   log?: Logger
 }
 
-export class Cloud {
+export class Cloud extends EventEmitter {
   public config: CloudConfig
   public account: Account
   public miio: MiIO
@@ -34,12 +44,13 @@ export class Cloud {
   public mina: Mina
 
   constructor(options?: Partial<CloudConfig>) {
+    super()
     this.config = {
       username: null,
       password: null,
       useEncrypt: true,
       locale: 'en',
-      accessTokens: {},
+      serviceTokens: {},
       userAgent: `Android-7.1.1-1.0.0-ONEPLUS A3010-136-${ randomString(13, 'ABCDEF') } APP/xiaomi.smarthome APPV/62830`,
       deviceId: randomString(6, 'ALPHABETIC'),
       ...options,
