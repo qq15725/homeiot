@@ -7,14 +7,14 @@
   <a href="https://www.npmjs.com/package/@homeiot/xiaomi">
     <img src="https://img.shields.io/npm/v/@homeiot/xiaomi.svg" alt="Version">
   </a>
-  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi/dist/index.js">
+  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi/dist/index.mjs">
     <img src="https://img.shields.io/bundlephobia/minzip/@homeiot/xiaomi" alt="Minzip">
   </a>
 </p>
 
 <p align="center">README | <a href="README_zh.md">中文文档</a></p>
 
-<p align="center">Xiaomi LAN/WAN control SDK for Node.js</p>
+<p align="center">Xiaomi MIoT/miIO LAN/WAN control SDK for Node.js</p>
 
 ## Installation
 

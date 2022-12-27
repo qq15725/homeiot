@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/@homeiot/yeelight">
     <img src="https://img.shields.io/npm/v/@homeiot/yeelight.svg" alt="Version">
   </a>
-  <a href="https://cdn.jsdelivr.net/npm/@homeiot/yeelight/dist/index.js">
+  <a href="https://cdn.jsdelivr.net/npm/@homeiot/yeelight/dist/index.mjs">
     <img src="https://img.shields.io/bundlephobia/minzip/@homeiot/yeelight" alt="Minzip">
   </a>
 </p>

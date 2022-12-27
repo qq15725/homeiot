@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/@homeiot/xiaomi-cli">
     <img src="https://img.shields.io/npm/v/@homeiot/xiaomi-cli.svg" alt="Version">
   </a>
-  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi-cli/dist/index.js">
+  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi-cli/dist/index.mjs">
     <img src="https://img.shields.io/bundlephobia/minzip/@homeiot/xiaomi-cli" alt="Minzip">
   </a>
 </p>

@@ -20,7 +20,9 @@
     "miot",
     "miot-cli",
     "miio",
-    "miio-cli"
+    "miio-cli",
+    "LAN",
+    "LAN-control"
   ],
   "exports": {
     ".": {

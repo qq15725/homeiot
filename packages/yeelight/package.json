@@ -2,7 +2,7 @@
   "name": "@homeiot/yeelight",
   "version": "0.0.3",
   "packageManager": "pnpm@7.9.0",
-  "description": "",
+  "description": "Yeelight LAN control SDK for Node.js",
   "author": "wxm",
   "license": "MIT",
   "homepage": "https://github.com/qq15725/homeiot",
@@ -16,7 +16,12 @@
   "engines": {
     "node": ">=14.18.1"
   },
-  "keywords": [],
+  "keywords": [
+    "yeelight",
+    "yeelight-sdk",
+    "LAN",
+    "LAN-control"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -7,14 +7,14 @@
   <a href="https://www.npmjs.com/package/@homeiot/xiaomi">
     <img src="https://img.shields.io/npm/v/@homeiot/xiaomi.svg" alt="Version">
   </a>
-  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi/dist/index.js">
+  <a href="https://cdn.jsdelivr.net/npm/@homeiot/xiaomi/dist/index.mjs">
     <img src="https://img.shields.io/bundlephobia/minzip/@homeiot/xiaomi" alt="Minzip">
   </a>
 </p>
 
 <p align="center"><a href="README.md">README</a> | 中文文档</p>
 
-<p align="center">Node.js 下的小米局域网/互联网控制 SDK</p>
+<p align="center">Node.js 下的小米 MIoT/miIO 局域网/公网控制 SDK</p>
 
 ## 安装
 

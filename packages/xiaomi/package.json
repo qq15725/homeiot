@@ -2,7 +2,7 @@
   "name": "@homeiot/xiaomi",
   "version": "0.0.3",
   "packageManager": "pnpm@7.9.0",
-  "description": "",
+  "description": "Xiaomi LAN/WAN control SDK for Node.js",
   "author": "wxm",
   "license": "MIT",
   "homepage": "https://github.com/qq15725/homeiot",
@@ -16,7 +16,14 @@
   "engines": {
     "node": ">=14.18.1"
   },
-  "keywords": [],
+  "keywords": [
+    "miot",
+    "miot-sdk",
+    "miio",
+    "miio-sdk",
+    "LAN",
+    "LAN-control"
+  ],
   "type": "module",
   "exports": {
     ".": {

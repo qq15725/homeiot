@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/@homeiot/aqara">
     <img src="https://img.shields.io/npm/v/@homeiot/aqara.svg" alt="Version">
   </a>
-  <a href="https://cdn.jsdelivr.net/npm/@homeiot/aqara/dist/index.js">
+  <a href="https://cdn.jsdelivr.net/npm/@homeiot/aqara/dist/index.mjs">
     <img src="https://img.shields.io/bundlephobia/minzip/@homeiot/aqara" alt="Minzip">
   </a>
 </p>
