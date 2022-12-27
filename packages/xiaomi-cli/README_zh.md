@@ -32,8 +32,7 @@ pnpm add -g @homeiot/xiaomi-cli
 miot login
 ```
 
-> 根据提示输入 Username 和 Password
-> ⚠️ 仅此次登录不会存储
+> 根据提示输入 Username 和 Password ⚠️ 仅本次登录使用，不会存储
 
 #### 查看公网设备列表
 
