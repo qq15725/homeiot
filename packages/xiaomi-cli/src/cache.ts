@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-export function cache(filename: string, value?: Record<string, any>): Record<string, any> {
+export function cache(filename: string, value?: any): any {
   const dir = path.dirname(filename)
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
@@ -13,6 +13,6 @@ export function cache(filename: string, value?: Record<string, any>): Record<str
     fs.writeFileSync(filename, JSON.stringify(value), 'utf8')
     return value
   } else {
-    return JSON.parse(fs.readFileSync(filename, 'utf8') || '{}')
+    return JSON.parse(fs.readFileSync(filename, 'utf8') || '') || undefined
   }
 }

@@ -1,3 +1,5 @@
+import type { ServiceToken } from './service'
+
 // miio
 
 export interface DecodedPacket {
@@ -13,9 +15,10 @@ export interface DecodedPacket {
 export interface DeviceInfo {
   did: number
   stamp?: number
-  host: string
+  host?: string
   port?: number
   token?: string
+  serviceTokens?: Record<string, ServiceToken>
 }
 
 // miot

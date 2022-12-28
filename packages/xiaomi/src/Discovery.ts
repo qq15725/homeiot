@@ -9,7 +9,7 @@ export type DiscoveryEvents = BaseDiscoveryEvents & {
 }
 
 export class Discovery extends BaseDiscovery {
-  protected miIO = new MiIO()
+  protected protocol = new MiIO()
 
   constructor() {
     super(
@@ -20,7 +20,7 @@ export class Discovery extends BaseDiscovery {
 
   protected onMessage(packet: Buffer, remote: RemoteInfo) {
     const { address: host } = remote
-    const { did, checksum, stamp, encrypted } = this.miIO.decode(packet)!
+    const { did, checksum, stamp, encrypted } = this.protocol.decode(packet)!
     if (!stamp || encrypted.length > 0) return
     const token = checksum.toString('hex').match(/^[fF0]+$/)
       ? undefined

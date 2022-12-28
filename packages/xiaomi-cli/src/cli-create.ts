@@ -2,13 +2,12 @@ import path from 'node:path'
 import os from 'node:os'
 import { createInterface } from 'node:readline'
 import { cac } from 'cac'
-import { Cloud, Discovery } from '@homeiot/xiaomi'
+import { Device, Discovery, Service } from '@homeiot/xiaomi'
 import consola from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput, lookupFile, normalizePath } from './utils'
 import { cache } from './cache'
 import { cloudDeviceFormat, localDeviceFormat, specFormat } from './formats'
-import type { Device } from '@homeiot/xiaomi'
 
 const { FancyReporter } = consola as any
 
@@ -28,6 +27,8 @@ export function createCli(
   output = process.stdout,
 ) {
   const { cwd, cacheDir: cacheDirOption, ...options } = config
+
+  // cache
   const pkgPath = lookupFile(cwd, ['package.json'], { pathOnly: true })
   const cacheDir = normalizePath(
     cacheDirOption
@@ -37,15 +38,18 @@ export function createCli(
         : path.join(cwd, '.miot'),
   )
   const serviceTokensCachePath = path.join(cacheDir, 'service_tokens.json')
-  const deviceTokensCachePath = path.join(cacheDir, 'device_tokens.json')
+  const devicesCachePath = path.join(cacheDir, 'devices.json')
+  const getDevices = (): Record<string, any>[] => cache(devicesCachePath) ?? []
+  const setDevices = (devices: Record<string, any>[]) => cache(devicesCachePath, devices)
+  const getServiceTokens = () => cache(serviceTokensCachePath) ?? {}
+  const setServiceTokens = (serviceTokens: Record<string, any>) => cache(serviceTokensCachePath, serviceTokens)
 
-  const cloud = new Cloud({
+  const service = new Service({
     ...options,
-    serviceTokens: cache(serviceTokensCachePath),
+    serviceTokens: getServiceTokens(),
     log: consola,
-  }).on('serviceToken', () => {
-    cache(serviceTokensCachePath, cloud.config.serviceTokens)
   })
+    .on('serviceToken', () => setServiceTokens(service.config.serviceTokens))
 
   const cli = cac('miot')
 
@@ -64,20 +68,17 @@ export function createCli(
     .command('login', 'Login account for Xiaomi')
     .action(async () => {
       const readline = createInterface({ input, output })
-      cloud.config.username = await new Promise(resolve => {
+      service.config.username = await new Promise(resolve => {
         readline.question('Username:', username => {
           readline.close()
           resolve(String(username))
         })
       })
-      cloud.config.password = await getPasswordByTerminalInput(input, output)
-      await cloud.account.login('xiaomiio')
-      const devices = await cloud.miio.getDevices()
+      service.config.password = await getPasswordByTerminalInput(input, output)
+      await service.account.login(service.miot.sid)
+      const devices = await service.miio.getDevices()
+      setDevices(devices)
       consola.log(devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
-      cache(
-        deviceTokensCachePath,
-        devices.reduce((map, device) => ({ ...map, [device.did]: device.token }), {}),
-      )
     })
 
   cli
@@ -98,22 +99,19 @@ export function createCli(
       args: string[],
       options: Record<string, any>,
     ) => {
-      const { raw: isOutputRaw, action: isAction } = options
+      const { raw: isOutputRaw, action: isAction, lan: useLAN } = options
 
       if (!did || did === 'devices') {
-        const devices = await cloud.miio.getDevices()
+        const devices = await service.miio.getDevices()
+        setDevices(devices)
         consola.log(isOutputRaw ? devices : devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
-        cache(
-          deviceTokensCachePath,
-          devices.reduce((map, device) => ({ ...map, [device.did]: device.token }), {}),
-        )
       } else if (!iid) {
         if (isNaN(Number(did))) {
-          const spec = await cloud.miotSpec.find(did)
+          const spec = await service.miotSpec.find(did)
           consola.log(isOutputRaw ? spec : specFormat(spec))
         } else {
-          const device = await cloud.miio.getDevice(did)
-          const spec = await cloud.miotSpec.find(device.model)
+          const device = await service.miio.getDevice(did)
+          const spec = await service.miotSpec.find(device.model)
           const specUrl = `https://home.miot-spec.com/spec/${ device.model }`
           if (isOutputRaw) {
             consola.log({ device, spec, specUrl })
@@ -126,8 +124,15 @@ export function createCli(
           }
         }
       } else {
+        const info = getDevices().find(v => Number(v.did) === Number(did))
+        const device = new Device({
+          did: Number(did),
+          host: info?.localip,
+          token: useLAN ? info?.token : undefined,
+          serviceTokens: getServiceTokens(),
+        })
         if (isAction) {
-          const res = await cloud.miot.action(did, iid, args)
+          const res = await device.action(iid, args)
           if (isOutputRaw) {
             consola.log(res)
           } else {
@@ -140,14 +145,14 @@ export function createCli(
           if (value === 'false') value = false
           if (iid.includes('.')) {
             if (args.length) {
-              const res = await cloud.miot.setProp(did, iid, value)
+              const res = await device.setProp(iid, value)
               if (isOutputRaw) {
                 consola.log(res)
               } else {
                 consola.success('ok')
               }
             } else {
-              const prop = await cloud.miot.getProp(did, iid)
+              const prop = await device.getProp(iid)
               if (isOutputRaw) {
                 consola.log(prop)
               } else {
@@ -156,14 +161,14 @@ export function createCli(
             }
           } else {
             if (args.length) {
-              const res = await cloud.miio.setProp(did, iid, value)
+              const res = await device.setProp(iid, value)
               if (isOutputRaw) {
                 consola.log(res)
               } else {
                 consola.success('ok')
               }
             } else {
-              const prop = await cloud.miio.getProp(did, iid)
+              const prop = await device.getProp(iid)
               if (isOutputRaw) {
                 consola.log(prop)
               } else {

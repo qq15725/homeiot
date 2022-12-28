@@ -1,5 +1,6 @@
 import { BaseDevice } from '@homeiot/shared'
 import { MiIO } from './MiIO'
+import { Service } from './service'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
@@ -31,20 +32,22 @@ export class Device extends BaseDevice {
     return this.getAttribute('fw_ver')
   }
 
-  public readonly miIO: MiIO
+  public readonly protocol: MiIO
+  public readonly service: Service
 
   constructor(info: DeviceInfo) {
-    const { host, port = 54321, ...props } = info
+    const { host = '0.0.0.0', port = 54321, serviceTokens, ...props } = info
     super(host, port, props, { type: 'udp4' })
     if (this.stamp) {
       this.setAttribute('timestamp', Date.now())
     }
-    this.miIO = new MiIO(this.did, this.token)
+    this.protocol = new MiIO(this.did, this.token)
+    this.service = new Service({ serviceTokens })
   }
 
   public setToken(token: string) {
     this.setAttribute('token', token)
-    this.miIO.setToken(token)
+    this.protocol.setToken(token)
   }
 
   public call(method: string, params: any = [], options?: { deconnect: boolean }): Promise<any> {
@@ -54,7 +57,7 @@ export class Device extends BaseDevice {
   }
 
   public send(data: string) {
-    const packet = this.miIO.encode(
+    const packet = this.protocol.encode(
       data,
       this.stamp && this.timestamp
         ? this.stamp + Math.floor((Date.now() - this.timestamp) / 1000)
@@ -67,7 +70,7 @@ export class Device extends BaseDevice {
   }
 
   protected onMessage(packet: Buffer) {
-    const data = this.miIO.decode(packet)
+    const data = this.protocol.decode(packet)
     if (!data || !data.encrypted.length) return
     if (data.stamp > 0) {
       this.setAttribute('stamp', data.stamp)
@@ -88,8 +91,6 @@ export class Device extends BaseDevice {
     }
   }
 
-  // miio local protocal
-
   public miIoInfo() {
     return this.call('miIO.info').then(res => {
       for (const [key, val] of Object.entries(res)) {
@@ -99,17 +100,51 @@ export class Device extends BaseDevice {
     })
   }
 
-  // miot local protocal
-
-  public getProperties(params: { siid: number; piid: number }[]) {
-    return this.call('get_properties', params.map(param => ({ ...param, did: Number(this.id) })))
+  protected resovleIid(iid: string) {
+    const [siid, piid] = iid
+      .replace(/^0\./, '')
+      .split('.')
+    return { siid: Number(siid), piid: Number(piid) }
   }
 
-  public setProperties(params: { siid: number; piid: number; value: any }[]) {
-    return this.call('set_properties', params.map(param => ({ ...param, did: Number(this.id) })))
+  public getProps(iids: string[]) {
+    if (this.token) {
+      return this.call('get_properties', iids.map(iid => {
+        const { siid, piid } = this.resovleIid(iid)
+        return { did: String(this.did), siid, piid }
+      }))
+    } else {
+      return this.service.miot.getProps(this.did, iids)
+    }
   }
 
-  public action(param: { siid: number; aiid: number; in: any[] }) {
-    return this.call('action', { ...param, did: Number(this.id) })
+  public async getProp(iid: string) {
+    return this.getProps([iid]).then(res => res[0])
+  }
+
+  public setProps(props: [string, any][]) {
+    if (this.token) {
+      return this.call('set_properties', props.map(val => {
+        const { siid, piid } = this.resovleIid(val[0])
+        return { did: String(this.did), siid, piid, value: val[1] }
+      }))
+    } else {
+      return this.service.miot.setProps(this.did, props)
+    }
+  }
+
+  public async setProp(iid: string, value: any) {
+    return this.setProps([[iid, value]]).then(res => res[0])
+  }
+
+  public action(iid: string, args: any[]) {
+    if (this.token) {
+      const { siid, piid } = this.resovleIid(iid)
+      return this.call('action', {
+        did: String(this.did), siid, aiid: piid, in: args,
+      })
+    } else {
+      return this.service.miot.action(this.did, iid, args)
+    }
   }
 }

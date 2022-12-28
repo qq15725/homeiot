@@ -1,3 +1,3 @@
 export * from './errors'
-export * from './Cloud'
+export * from './Service'
 export * from './types'

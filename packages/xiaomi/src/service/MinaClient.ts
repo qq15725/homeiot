@@ -4,7 +4,7 @@ import { randomString } from './utils'
 import type { RequestInit } from 'node-fetch'
 
 export abstract class MinaClient extends Client {
-  protected sid = 'micoapi'
+  public readonly sid = 'micoapi'
   protected baseUri = 'https://api2.mina.mi.com'
   protected get accessToken() {
     return this.config.serviceTokens[this.sid]

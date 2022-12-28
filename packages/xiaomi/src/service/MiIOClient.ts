@@ -7,7 +7,7 @@ import type { Request } from './types'
 import type { RequestInit, Response } from 'node-fetch'
 
 export abstract class MiIOClient extends Client {
-  protected sid = 'xiaomiio'
+  public readonly sid = 'xiaomiio'
   protected baseUri = 'https://api.io.mi.com/app'
   protected get accessToken() {
     return this.config.serviceTokens[this.sid]
