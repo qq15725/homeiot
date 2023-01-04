@@ -32,8 +32,8 @@ export abstract class BaseDevice extends EventEmitter {
   private static _autoIncrementId = 0
   private _client?: Tcp | Udp
   private readonly _waitingRequests = new Map<string, WaitingRequest>()
-  private _attributes = new Map<string, any>()
-  private _options: BaseDeviceOptions
+  private readonly _attributes = new Map<string, any>()
+  private readonly _options: BaseDeviceOptions
 
   constructor(
     public readonly host: string,
@@ -68,14 +68,34 @@ export abstract class BaseDevice extends EventEmitter {
       udpOptions,
     }
 
-    attributes && this.setAttributes(attributes)
+    attributes && this.fill(attributes)
   }
 
-  public getAttribute = (key: string): any | undefined => this._attributes.get(key)
-  public hasAttribute = (key: string): boolean => this._attributes.has(key)
-  public setAttribute = (key: string, value: any): void => { this._attributes.set(key, value) }
-  public getAttributes = (): Record<string, any> => ({ ...Object.fromEntries(this._attributes), host: this.host, port: this.port })
-  public setAttributes = (attributes: Record<string, any>): void => { this._attributes = new Map(Object.entries(attributes)) }
+  public get(key: string): any | undefined {
+    return this._attributes.get(key)
+  }
+
+  public has(key: string): boolean {
+    return this._attributes.has(key)
+  }
+
+  public set(key: string, value: any): void {
+    this._attributes.set(key, value)
+  }
+
+  public fill(attributes: Record<string, any>): void {
+    for (const [key, value] of Object.entries(attributes)) {
+      this._attributes.set(key, value)
+    }
+  }
+
+  public toObject(): Record<string, any> {
+    return {
+      ...Object.fromEntries(this._attributes),
+      host: this.host,
+      port: this.port,
+    }
+  }
 
   public start(
     options?: {
@@ -162,19 +182,22 @@ export abstract class BaseDevice extends EventEmitter {
     })
   }
 
-  public generateId = (): number => ++BaseDevice._autoIncrementId
+  public uuid = (): string => String(++BaseDevice._autoIncrementId)
 
   public request(
-    uuid: string,
     data: string | Uint8Array,
     options?: {
+      uuid?: string
       keepAlive?: boolean
       timeout?: number
     },
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      const {
+        uuid = this.uuid(),
+        timeout = this._options.requestTimeout,
+      } = options ?? {}
       let timer: any
-      const timeout = options?.timeout ?? this._options.requestTimeout
 
       this.onRequest(uuid, data)
 

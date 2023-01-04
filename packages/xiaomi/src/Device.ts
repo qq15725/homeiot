@@ -9,23 +9,23 @@ export class Device extends BaseDevice {
   }
 
   public get did(): number {
-    return this.getAttribute('did')
+    return this.get('did')
   }
 
   public get token(): string | undefined {
-    return this.getAttribute('token')
+    return this.get('token')
   }
 
   public get stamp(): number | undefined {
-    return this.getAttribute('stamp')
+    return this.get('stamp')
   }
 
   public get timestamp(): number | undefined {
-    return this.getAttribute('timestamp')
+    return this.get('timestamp')
   }
 
   public get model(): string | undefined {
-    return this.getAttribute('model')
+    return this.get('model')
   }
 
   public readonly protocol: Protocol
@@ -35,14 +35,14 @@ export class Device extends BaseDevice {
     const { host = '0.0.0.0', port = 54321, serviceTokens, ...attributes } = info
     super(host, port, attributes, { type: 'udp4' })
     if (this.stamp) {
-      this.setAttribute('timestamp', Date.now())
+      this.set('timestamp', Date.now())
     }
     this.protocol = new Protocol(this.did, this.token)
     this.service = new Service({ serviceTokens })
   }
 
   public setToken(token: string) {
-    this.setAttribute('token', token)
+    this.set('token', token)
     this.protocol.miio.setToken(token)
   }
 
@@ -55,11 +55,11 @@ export class Device extends BaseDevice {
     },
   ): Promise<any> {
     if (!this.stamp) {
-      await this.request('hello', this.protocol.miio.helloPacket)
+      await this.request(this.protocol.miio.helloPacket, { uuid: 'hello' })
     }
-    const id = this.generateId()
+    const id = this.uuid()
     const data = `${ JSON.stringify({ id, method, params }) }\r\n`
-    return this.request(String(id), data, options).then(val => val.result)
+    return this.request(data, { ...options, uuid: String(id) }).then(val => val.result)
   }
 
   public send(data: string | Buffer) {
@@ -80,8 +80,8 @@ export class Device extends BaseDevice {
     const data = this.protocol.miio.decode(packet)
     if (!data) return
     if (data.stamp > 0) {
-      this.setAttribute('stamp', data.stamp)
-      this.setAttribute('timestamp', Date.now())
+      this.set('stamp', data.stamp)
+      this.set('timestamp', Date.now())
       this.getWaitingRequest('hello')?.resolve()
     }
     if (!data.decrypted) return
@@ -99,17 +99,17 @@ export class Device extends BaseDevice {
     }
   }
 
+  public async setupInfo() {
+    const attributes = await this.getInfo()
+    for (const [key, val] of Object.entries(attributes)) {
+      this.set(key, val)
+    }
+  }
+
   public getInfo() {
-    return (
-      this.token
-        ? this.call('miIO.info')
-        : this.service.miio.getDevice(this.did)
-    ).then(res => {
-      for (const [key, val] of Object.entries(res)) {
-        this.setAttribute(key, val)
-      }
-      return res
-    })
+    return this.token
+      ? this.call('miIO.info')
+      : this.service.miio.getDevice(this.did)
   }
 
   public getSpec() {
@@ -123,22 +123,22 @@ export class Device extends BaseDevice {
     return { siid: Number(siid), piid: Number(piid) }
   }
 
-  public getProps(iids: string[]) {
+  public getProps(keys: string[]) {
     if (this.token) {
-      return this.call('get_properties', iids.map(iid => {
+      return this.call('get_properties', keys.map(iid => {
         const { siid, piid } = this.resovleIid(iid)
         return { did: String(this.did), siid, piid }
       }))
     } else {
-      return this.service.miot.getProps(this.did, iids)
+      return this.service.miot.getProps(this.did, keys)
     }
   }
 
-  public async getProp(iid: string) {
-    if (iid.includes('.')) {
-      return this.getProps([iid]).then(res => res[0])
+  public async getProp(key: string) {
+    if (key.includes('.')) {
+      return this.getProps([key]).then(res => res[0])
     } else {
-      return this.call('get_prop', [iid]).then(res => res[0])
+      return this.call('get_prop', [key]).then(res => res[0])
     }
   }
 
@@ -153,22 +153,22 @@ export class Device extends BaseDevice {
     }
   }
 
-  public async setProp(iid: string, value: any) {
-    if (iid.includes('.')) {
-      return this.setProps([[iid, value]]).then(res => res[0])
+  public async setProp(key: string, value: any) {
+    if (key.includes('.')) {
+      return this.setProps([[key, value]]).then(res => res[0])
     } else {
-      return this.call(`set_${ iid }`, [value])
+      return this.call(`set_${ key }`, [value])
     }
   }
 
-  public action(iid: string, args: any[]) {
+  public action(key: string, args: any[]) {
     if (this.token) {
-      const { siid, piid } = this.resovleIid(iid)
+      const { siid, piid } = this.resovleIid(key)
       return this.call('action', {
         did: String(this.did), siid, aiid: piid, in: args,
       })
     } else {
-      return this.service.miot.action(this.did, iid, args)
+      return this.service.miot.action(this.did, key, args)
     }
   }
 }

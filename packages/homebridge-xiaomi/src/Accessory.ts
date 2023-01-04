@@ -10,18 +10,27 @@ export class Accessory extends BaseAccessory {
     public readonly device: Device,
   ) {
     super(platform, accessory)
-    device
-      .on('error', err => this.log.error(err))
-      .on('start', () => this.log.debug('[start]', `${ device.host }:${ device.port }`))
-      .on('request', data => this.log.debug('[request]', `${ device.host }:${ device.port }`, data))
-      .on('response', data => this.log.debug('[response]', `${ device.host }:${ device.port }`, data))
     this.setup().catch(err => this.log.error(err))
   }
 
   protected async setup() {
-    await this.device.getInfo()
-    await this.setupInfo()
+    const prefix = `${ this.device.host }:${ this.device.port }`
+
+    await this.device
+      .on('error', err => this.log.error(err))
+      .on('start', () => this.log.debug('[start]', prefix))
+      .on('request', data => this.log.debug('[request]', prefix, data))
+      .on('response', data => this.log.debug('[response]', prefix, data))
+      .setupInfo()
+
+    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
+    this.setCharacteristic('AccessoryInformation.Model', this.device.get('model'))
+    this.setCharacteristic('AccessoryInformation.Name', this.device.get('name') ?? this.device.get('model'))
+    this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.did)
+    this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.get('fw_ver') ?? this.device.get('extra.fw_version'))
+
     const model = this.device.model
+
     if (model?.includes('wifispeaker')) {
       this.setupWifispeaker()
     } else if (model?.includes('airpurifier')) {
@@ -29,24 +38,16 @@ export class Accessory extends BaseAccessory {
     }
   }
 
-  protected async setupInfo() {
-    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
-    this.setCharacteristic('AccessoryInformation.Model', this.device.getAttribute('model'))
-    this.setCharacteristic('AccessoryInformation.Name', this.device.getAttribute('name') ?? this.device.getAttribute('model'))
-    this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.did)
-    this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.getAttribute('fw_ver') ?? this.device.getAttribute('extra.fw_version'))
-  }
-
   protected async setupAirPurifier() {
     this.getService('AirPurifier', this.device.model)
-    this.device.setAttribute('power', await this.device.getProp('power'))
+    this.device.set('power', await this.device.getProp('power'))
     this.onCharacteristic('AirPurifier.Active', {
-      onGet: () => this.device.getAttribute('power') === 'on'
+      onGet: () => this.device.get('power') === 'on'
         ? this.Characteristic.Active.ACTIVE
         : this.Characteristic.Active.INACTIVE,
       onSet: async val => {
         await this.device.setProp('power', val ? 'on' : 'off')
-        this.device.setAttribute('power', val ? 'on' : 'off')
+        this.device.set('power', val ? 'on' : 'off')
       },
     })
     this.onCharacteristic('AirPurifier.CurrentAirPurifierState', {
@@ -62,7 +63,7 @@ export class Accessory extends BaseAccessory {
   }
 
   public save() {
-    this.accessory.context = this.device.getAttributes()
+    this.accessory.context = this.device.toObject()
     super.save()
   }
 }

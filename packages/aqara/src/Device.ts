@@ -29,7 +29,7 @@ export class Device extends BaseDevice {
       .update(this.token, 'ascii', 'hex')
   }
 
-  protected uuid(cmd: string) {
+  protected cmdUuid(cmd: string) {
     if (cmd.endsWith('_ack')) cmd = cmd.substring(-1, 4)
     return `${ cmd }${ this.sid }`
   }
@@ -43,7 +43,7 @@ export class Device extends BaseDevice {
       return
     }
     const { cmd, data } = message
-    this.getWaitingRequest(this.uuid(cmd))?.resolve(data)
+    this.getWaitingRequest(this.cmdUuid(cmd))?.resolve(data)
   }
 
   public call(cmd: string, params?: Record<string, any>): Promise<any> {
@@ -54,7 +54,7 @@ export class Device extends BaseDevice {
       short_id: this.shortId,
     }
     if (params) payload.data = JSON.stringify(params)
-    return this.request(this.uuid(cmd), JSON.stringify(payload))
+    return this.request(JSON.stringify(payload), { uuid: this.cmdUuid(cmd) })
   }
 
   public write = (props: Record<string, any>): Promise<Record<string, any>> => this.call('write', { ...props, key: this.generateKey() })

@@ -12,7 +12,7 @@ import type {
 export class Device extends BaseDevice {
   // The ID of a Yeelight WiFi LED device, 3rd party device should use this value to uniquely identified a Yeelight WiFi LED device.
   public get id(): string | undefined {
-    return this.getAttribute('id')
+    return this.get('id')
   }
 
   // The product model of a Yeelight smart device. Current it can be "mono", "color", “stripe”, “ceiling”, “bslamp”. For "mono", it represents device that only supports brightness adjustment.
@@ -21,7 +21,7 @@ export class Device extends BaseDevice {
   // “Ceiling” stands for Yeelight Ceiling Light.
   // More values may be added in future.
   public get model(): DeviceProductModel | undefined {
-    return this.getAttribute('model')
+    return this.get('model')
   }
 
   // Model name
@@ -37,190 +37,190 @@ export class Device extends BaseDevice {
 
   // TCP
   public get from(): 'response' | 'notify' | string | undefined {
-    return this.getAttribute('from')
+    return this.get('from')
   }
 
   // field contains the service access point of the smart LED deivce.
   // The URI scheme will always be "yeelight", host is the IP address of smart LED, port is control service's TCP listen port.
   public get location(): string | undefined {
-    return this.getAttribute('Location')
+    return this.get('Location')
   }
 
   // LED device's firmware version.
   public get fwVer(): string | undefined {
-    return this.getAttribute('fw_ver')
+    return this.get('fw_ver')
   }
 
   // All the supported control methods separated by white space.
   // 3Rd party device can use this field to dynamically render the control view to user if necessary.
   // Any control request that invokes method that is not included in this field will be rejected by smart LED
   public get support(): DeviceSupportedMethods | undefined {
-    return this.getAttribute('support')
+    return this.get('support')
   }
 
   // Props
 
   // on: smart LED is turned on / off: smart LED is turned off
   public get power(): 'on' | 'off' | undefined {
-    return this.getAttribute('power')
+    return this.get('power')
   }
 
   public set power(value) {
     if (value !== undefined && this.power !== value) {
       this.setPower(value).catch(this.onError.bind(this))
     }
-    this.setAttribute('power', value)
+    this.set('power', value)
   }
 
   // Brightness percentage. Range 1 ~ 100
   public get bright(): number | undefined {
-    return this.getAttribute('bright')
+    return this.get('bright')
   }
 
   public set bright(value) {
     if (value !== undefined && this.bright !== value) {
       this.setBright(value).catch(this.onError.bind(this))
     }
-    this.setAttribute('bright', value)
+    this.set('bright', value)
   }
 
   // Color temperature. Range 1700 ~ 6500(k)
   // This field is only valid if COLOR_MODE is 2.
   public get ct(): number | undefined {
-    return this.getAttribute('ct')
+    return this.get('ct')
   }
 
   public set ct(value) {
     if (value !== undefined && this.ct !== value) {
       this.setCtAbx(value).catch(this.onError.bind(this))
     }
-    this.setAttribute('ct', value)
+    this.set('ct', value)
   }
 
   // Color. Range 1 ~ 16777215
   // The field is only valid if COLOR_MODE is 1.
   public get rgb(): number | undefined {
-    return this.getAttribute('rgb')
+    return this.get('rgb')
   }
 
   public set rgb(value) {
     if (value !== undefined && this.rgb !== value) {
       this.setRgb(value).catch(this.onError.bind(this))
     }
-    this.setAttribute('rgb', value)
+    this.set('rgb', value)
   }
 
   // Hue. Range 0 ~ 359
   // This field is only valid if COLOR_MODE is 3.
   public get hue(): number | undefined {
-    return this.getAttribute('hue')
+    return this.get('hue')
   }
 
   public set hue(value) {
     if (value !== undefined && this.hue !== value && this.sat !== undefined) {
       this.setHsv(value, this.sat).catch(this.onError.bind(this))
     }
-    this.setAttribute('hue', value)
+    this.set('hue', value)
   }
 
   // Saturation. Range 0 ~ 100
   // The field is only valid if COLOR_MODE is 3.
   public get sat(): number | undefined {
-    return this.getAttribute('sat')
+    return this.get('sat')
   }
 
   public set sat(value) {
     if (value !== undefined && this.sat !== value && this.hue !== undefined) {
       this.setHsv(this.hue, value).catch(this.onError.bind(this))
     }
-    this.setAttribute('sat', value)
+    this.set('sat', value)
   }
 
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode
   public get colorMode(): 1 | 2 | 3 | undefined {
-    return this.getAttribute('color_mode')
+    return this.get('color_mode')
   }
 
   // 0: no flow is running / 1:color flow is running
   public get flowing(): 0 | 1 | undefined {
-    return this.getAttribute('flowing')
+    return this.get('flowing')
   }
 
   // The remaining time of a sleep timer. Range 1 ~ 60 (minutes)
   public get delayoff(): number | undefined {
-    return this.getAttribute('delayoff')
+    return this.get('delayoff')
   }
 
   // Current flow parameters (only meaningful when 'flowing' is 1)
   public get flowParams(): string | undefined {
-    return this.getAttribute('flow_params')
+    return this.get('flow_params')
   }
 
   // 1: Music mode is on / 0: Music mode is off
   public get musicOn(): 1 | 0 | undefined {
-    return this.getAttribute('music_on')
+    return this.get('music_on')
   }
 
   // Name of the device. User can use “set_name” to store the name on the device.
   // The maximum length is 64 bytes.
   // If none-ASCII character is used, it is suggested to BASE64 the name first and then use “set_name” to store it on device.
   public get name(): string | undefined {
-    return this.getAttribute('name')
+    return this.get('name')
   }
 
   // Background light power status
   public get bgPower(): 'on' | 'off' | undefined {
-    return this.getAttribute('bg_power')
+    return this.get('bg_power')
   }
 
   // Background light is flowingt
   public get bgFlowing(): 0 | 1 | undefined {
-    return this.getAttribute('bg_flowing')
+    return this.get('bg_flowing')
   }
 
   // Current flow parameters of background ligh
   public get bgFlowParams(): string | undefined {
-    return this.getAttribute('bg_flow_params')
+    return this.get('bg_flow_params')
   }
 
   // Color temperature of background light
   public get bgCt(): number | undefined {
-    return this.getAttribute('bg_ct')
+    return this.get('bg_ct')
   }
 
   // 1: rgb mode / 2: color temperature mode / 3: hsv mode
   public get bgLmode(): 1 | 2 | 3 | undefined {
-    return this.getAttribute('bg_lmode')
+    return this.get('bg_lmode')
   }
 
   // Brightness percentage of background light
   public get bgBright(): number | undefined {
-    return this.getAttribute('bg_bright')
+    return this.get('bg_bright')
   }
 
   // Color of background light
   public get bgRgb(): number | undefined {
-    return this.getAttribute('bg_rgb')
+    return this.get('bg_rgb')
   }
 
   // Hue of background light
   public get bgHue(): number | undefined {
-    return this.getAttribute('bg_hue')
+    return this.get('bg_hue')
   }
 
   // Saturation of background light
   public get bgSat(): number | undefined {
-    return this.getAttribute('bg_sat')
+    return this.get('bg_sat')
   }
 
   // Brightness of night mode light
   public get nlBr(): number | undefined {
-    return this.getAttribute('nl_br')
+    return this.get('nl_br')
   }
 
   // 0: daylight mode / 1: moonlight mode (ceiling light only)
   public get activeMode(): 0 | 1 | undefined {
-    return this.getAttribute('active_mode')
+    return this.get('active_mode')
   }
 
   public get displayName(): string {
@@ -239,9 +239,10 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
-    const id = this.generateId()
-    return this.request(String(id), JSON.stringify({ id, method, params }) + EOL, { keepAlive: true })
-      .then(val => val.result)
+    const id = this.uuid()
+    const data = JSON.stringify({ id, method, params }) + EOL
+    const options = { keepAlive: true, uuid: String(id) }
+    return this.request(data, options).then(val => val.result)
   }
 
   protected onMessage(message: Buffer) {

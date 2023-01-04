@@ -28,7 +28,7 @@ export class Platform extends BasePlatform<Accessory> implements DynamicPlatform
     if (!this.config.tokens[id]) return
     // eslint-disable-next-line new-cap
     const accessory = new this.api.platformAccessory(id, this.api.hap.uuid.generate(id))
-    accessory.context = device.getAttributes()
+    accessory.context = device.toObject()
     if (!this.accessories.has(id)) {
       this.log(`Initializing new accessory ${ id } with name ${ id }...`)
       this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
