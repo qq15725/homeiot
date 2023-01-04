@@ -119,7 +119,15 @@ export abstract class BaseDevice extends EventEmitter {
         return waitForConnect(30)
       }
 
-      const onConnectTimeout = () => this._client instanceof Tcp && this._client?.destroy(new Error('Socket connect timeout'))
+      const onConnectionTimeout = () => {
+        if (this._client instanceof Tcp) {
+          this._client?.destroy(new Error('Socket connect timeout'))
+        }
+      }
+      const onConnectionError = (err: Error) => {
+        this._client = undefined
+        this.onError(err)
+      }
       const onError = this.onError.bind(this)
       const onStart = this.onStart.bind(this)
       const onStop = this.onStop.bind(this)
@@ -128,24 +136,28 @@ export abstract class BaseDevice extends EventEmitter {
       if (type === 'tcp') {
         this._client = new Tcp(tcpOptions)
           .setTimeout(timeout)
-          .once('timeout', onConnectTimeout)
-          .on('error', onError)
+          .once('timeout', onConnectionTimeout)
+          .once('error', onConnectionError)
           .once('connect', () => {
             onStart()
             ;(this._client as Tcp)
+              .off('error', onConnectionError)
               .setEncoding(encoding)
               .once('close', onStop)
+              .on('error', onError)
               .on('data', onMessage)
             resolve(this)
           })
           .connect(this.port, this.host)
       } else if (type.startsWith('udp')) {
         this._client = createUdp(udpOptions)
-          .on('error', onError)
+          .once('error', onConnectionError)
           .once('listening', () => {
             onStart()
             ;(this._client as Udp)
+              .off('error', onConnectionError)
               .once('close', onStop)
+              .on('error', onError)
               .on('message', onMessage)
             resolve(this)
           })
@@ -218,7 +230,7 @@ export abstract class BaseDevice extends EventEmitter {
         onFinally()
       }
 
-      timer = setTimeout(() => onReject(new Error(`Request timeout - uuid: ${ uuid }`)), timeout)
+      timer = setTimeout(() => onReject(new Error(`Request timeout ${ uuid } ${ data.toString() }`)), timeout)
 
       this._waitingRequests.set(uuid, {
         resolve: onResolve,

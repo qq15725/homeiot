@@ -19,6 +19,7 @@ export class Accessory extends BaseAccessory {
     await this.device
       .on('error', err => this.log.error(err))
       .on('start', () => this.log.debug('[start]', prefix))
+      .on('stop', () => this.log.debug('[stop]', prefix))
       .on('request', data => this.log.debug('[request]', prefix, data))
       .on('response', data => this.log.debug('[response]', prefix, data))
       .setupInfo()
@@ -28,7 +29,7 @@ export class Accessory extends BaseAccessory {
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
     this.setCharacteristic('AccessoryInformation.Model', model)
     this.setCharacteristic('AccessoryInformation.Name', this.device.get('name') ?? model)
-    this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.did)
+    this.setCharacteristic('AccessoryInformation.SerialNumber', String(this.device.did))
     this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.get('fw_ver') ?? this.device.get('extra.fw_version'))
 
     if (model?.includes('wifispeaker')) {
@@ -40,6 +41,7 @@ export class Accessory extends BaseAccessory {
 
   protected async setupWifispeaker() {
     this.getService('SmartSpeaker', this.device.model)
+    this.device.set('3.1', await this.device.getProp('3.1'))
     this.onCharacteristic('SmartSpeaker.CurrentMediaState', {
       onGet: () => this.device.get('3.1') === 1
         ? this.Characteristic.CurrentMediaState.PLAY
@@ -47,8 +49,9 @@ export class Accessory extends BaseAccessory {
     })
     this.onCharacteristic('SmartSpeaker.TargetMediaState', {
       onGet: () => this.device.get('3.1') === 1
-        ? this.Characteristic.CurrentMediaState.PLAY
-        : this.Characteristic.CurrentMediaState.STOP,
+        ? this.Characteristic.CurrentMediaState.STOP
+        : this.Characteristic.CurrentMediaState.PLAY,
+      onSet: val => this.device.action(val ? '3.3' : '3.2'),
     })
   }
 

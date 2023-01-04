@@ -25,10 +25,11 @@ export class Accessory extends BaseAccessory {
     device
       .on('error', err => this.log.error(err))
       .on('start', () => this.log.debug('[start]', `${ device.host }:${ device.port } ${ name }`))
+      .on('stop', () => this.log.debug('[stop]', `${ device.host }:${ device.port } ${ name }`))
       .on('request', data => this.log.debug('[request]', `${ device.host }:${ device.port }`, data))
       .on('response', data => this.log.debug('[response]', `${ device.host }:${ device.port }`, data))
 
-    device.startCf('500, 2, 0, 10, 500, 2, 0, 100', 4)
+    device.startCf('500, 2, 0, 10, 500, 2, 0, 100', 4).catch(err => this.log.error(err))
 
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
     this.setCharacteristic('AccessoryInformation.Model', device.modelName ?? device.model)

@@ -34,9 +34,8 @@ export class Device extends BaseDevice {
   constructor(info: DeviceInfo) {
     const { host = '0.0.0.0', port = 54321, serviceTokens, ...attributes } = info
     super(host, port, attributes, { type: 'udp4' })
-    if (this.stamp) {
-      this.set('timestamp', Date.now())
-    }
+    this.set('stamp', undefined)
+    this.set('timestamp', undefined)
     this.protocol = new Protocol(this.did, this.token)
     this.service = new Service({ serviceTokens })
   }
@@ -160,7 +159,7 @@ export class Device extends BaseDevice {
     }
   }
 
-  public action(key: string, args: any[]) {
+  public action(key: string, args: any[] = []) {
     if (this.token) {
       const { siid, piid } = this.resovleIid(key)
       return this.call('action', {
