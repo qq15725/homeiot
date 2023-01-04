@@ -121,8 +121,14 @@ export function createCli(
         token: useLAN ? info?.token : undefined,
         serviceTokens: useLAN ? undefined : getServiceTokens(),
       })
+        .on('error', err => consola.error(err))
+        .on('start', () => consola.debug('[start]'))
+        .on('request', data => consola.debug('[request]', data))
+        .on('response', data => consola.debug('[response]', data))
+
       if (!iid) {
         const info = await device.getInfo()
+        device.fill(info)
         const spec = useLAN ? undefined : await device.getSpec()
         const specUrl = `https://home.miot-spec.com/spec/${ info.model }`
         if (isOutputRaw) {

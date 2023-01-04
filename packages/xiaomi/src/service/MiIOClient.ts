@@ -212,7 +212,7 @@ export abstract class MiIOClient extends Client {
     }
   }
 
-  protected catchError(code?: number) {
+  public catchError(code?: number) {
     if (code === undefined) return
     const errorCode = code.toString()
     if (errorCode in this.errorCodes) {

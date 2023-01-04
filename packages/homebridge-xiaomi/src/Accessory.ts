@@ -23,19 +23,33 @@ export class Accessory extends BaseAccessory {
       .on('response', data => this.log.debug('[response]', prefix, data))
       .setupInfo()
 
+    const model = this.device.get('model')
+
     this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
-    this.setCharacteristic('AccessoryInformation.Model', this.device.get('model'))
-    this.setCharacteristic('AccessoryInformation.Name', this.device.get('name') ?? this.device.get('model'))
+    this.setCharacteristic('AccessoryInformation.Model', model)
+    this.setCharacteristic('AccessoryInformation.Name', this.device.get('name') ?? model)
     this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.did)
     this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.get('fw_ver') ?? this.device.get('extra.fw_version'))
-
-    const model = this.device.model
 
     if (model?.includes('wifispeaker')) {
       this.setupWifispeaker()
     } else if (model?.includes('airpurifier')) {
       this.setupAirPurifier()
     }
+  }
+
+  protected async setupWifispeaker() {
+    this.getService('SmartSpeaker', this.device.model)
+    this.onCharacteristic('SmartSpeaker.CurrentMediaState', {
+      onGet: () => this.device.get('3.1') === 1
+        ? this.Characteristic.CurrentMediaState.PLAY
+        : this.Characteristic.CurrentMediaState.STOP,
+    })
+    this.onCharacteristic('SmartSpeaker.TargetMediaState', {
+      onGet: () => this.device.get('3.1') === 1
+        ? this.Characteristic.CurrentMediaState.PLAY
+        : this.Characteristic.CurrentMediaState.STOP,
+    })
   }
 
   protected async setupAirPurifier() {
@@ -56,10 +70,6 @@ export class Accessory extends BaseAccessory {
     this.onCharacteristic('AirPurifier.TargetAirPurifierState', {
       onGet: () => this.Characteristic.TargetAirPurifierState.MANUAL,
     })
-  }
-
-  protected async setupWifispeaker() {
-
   }
 
   public save() {

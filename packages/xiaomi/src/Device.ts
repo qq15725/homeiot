@@ -57,17 +57,15 @@ export class Device extends BaseDevice {
     if (!this.stamp) {
       await this.request(this.protocol.miio.helloPacket, { uuid: 'hello' })
     }
-    const id = this.uuid()
-    const data = `${ JSON.stringify({ id, method, params }) }\r\n`
-    return this.request(data, { ...options, uuid: String(id) }).then(val => val.result)
+    const uuid = this.uuid()
+    const data = JSON.stringify({ id: Number(uuid), method, params })
+    return this.request(data, { ...options, uuid }).then(val => val.result)
   }
 
   public send(data: string | Buffer) {
     if (typeof data === 'string') {
-      const packet = this.protocol.miio.encode(
-        data,
-        this.stamp! + Math.floor((Date.now() - this.timestamp!) / 1000),
-      )
+      const stamp = this.stamp! + Math.floor((Date.now() - this.timestamp!) / 1000)
+      const packet = this.protocol.miio.encode(data, stamp)
       if (!packet) {
         return Promise.reject(new Error('Token is required to call method'))
       }
@@ -125,21 +123,22 @@ export class Device extends BaseDevice {
 
   public getProps(keys: string[]) {
     if (this.token) {
-      return this.call('get_properties', keys.map(iid => {
-        const { siid, piid } = this.resovleIid(iid)
-        return { did: String(this.did), siid, piid }
-      }))
+      if (keys.length && keys[0].includes('.')) {
+        return this.call('get_properties', keys.map(iid => {
+          const { siid, piid } = this.resovleIid(iid)
+          return { did: String(this.did), siid, piid }
+        }))
+      }
+      return this.call('get_prop', keys)
     } else {
       return this.service.miot.getProps(this.did, keys)
     }
   }
 
   public async getProp(key: string) {
-    if (key.includes('.')) {
-      return this.getProps([key]).then(res => res[0])
-    } else {
-      return this.call('get_prop', [key]).then(res => res[0])
-    }
+    const result = await this.getProps([key]).then(res => res[0])
+    'code' in result && this.service.miot.catchError(result.code)
+    return 'value' in result ? result.value : result
   }
 
   public setProps(props: [string, any][]) {

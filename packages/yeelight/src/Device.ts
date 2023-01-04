@@ -239,9 +239,9 @@ export class Device extends BaseDevice {
   }
 
   public call(method: string, params: any[] = []): Promise<any> {
-    const id = this.uuid()
-    const data = JSON.stringify({ id, method, params }) + EOL
-    const options = { keepAlive: true, uuid: String(id) }
+    const uuid = this.uuid()
+    const data = JSON.stringify({ id: Number(uuid), method, params })
+    const options = { keepAlive: true, uuid }
     return this.request(data, options).then(val => val.result)
   }
 
