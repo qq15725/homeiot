@@ -67,11 +67,26 @@ export function serviceFormat(info: Record<string, any>) {
     .join(os.EOL)
 }
 
-export function localDeviceFormat(info: Record<string, any>) {
+export function discoveredDeviceFormat(info: Record<string, any>) {
   return `
    ip: ${ info.host }
   did: ${ info.did }
+stamp: ${ info.stamp }
 token: ${ info.token ?? 'Unknown' }`
+    .replace(/^\n/, '')
+}
+
+export function lanDeviceFormat(info: Record<string, any>) {
+  return `
+          model: ${ info.model }
+          token: ${ info.token }
+           ssid: ${ info.ap?.ssid }
+        localip: ${ info.netif?.localIp }
+           life: ${ info.life }
+       miio_ver: ${ info.miio_ver ?? '' }
+         fw_ver: ${ info.fw_ver ?? '' }
+    wifi_fw_ver: ${ info.wifi_fw_ver ?? '' }
+miio_client_ver: ${ info.miio_client_ver ?? '' }`
     .replace(/^\n/, '')
 }
 

@@ -18,27 +18,56 @@ export type BaseDeviceEvents = {
   response: (data: any, uuid: string) => void
 }
 
+export interface BaseDeviceOptions {
+  type: 'tcp' | 'udp4' | 'udp6'
+  retries: number
+  encoding: BufferEncoding
+  connectionTimeout: number
+  requestTimeout: number
+  tcpOptions: TcpOptions
+  udpOptions: UdpOptions
+}
+
 export abstract class BaseDevice extends EventEmitter {
   private static _autoIncrementId = 0
   private _client?: Tcp | Udp
   private readonly _waitingRequests = new Map<string, WaitingRequest>()
   private _attributes = new Map<string, any>()
+  private _options: BaseDeviceOptions
 
   constructor(
     public readonly host: string,
     public readonly port: number,
     attributes?: Record<string, any>,
-    private readonly _options?: {
-      type?: 'tcp' | 'udp4' | 'udp6'
-      retries?: number
-      encoding?: BufferEncoding
-      connectTimeout?: number
-      timeout?: number
-      tcpOptions?: TcpOptions
-      udpOptions?: UdpOptions
-    },
+    options?: Partial<BaseDeviceOptions>,
   ) {
     super()
+
+    const {
+      type = 'tcp',
+      retries = 1,
+      connectionTimeout = 3000,
+      requestTimeout = 3000,
+      encoding = 'utf8',
+      tcpOptions = {},
+      udpOptions = {
+        type: options?.type?.startsWith('udp')
+          ? (options.type as 'udp4' | 'udp6')
+          : 'udp4',
+        reuseAddr: true,
+      },
+    } = options || {}
+
+    this._options = {
+      type,
+      retries,
+      connectionTimeout,
+      requestTimeout,
+      encoding,
+      tcpOptions,
+      udpOptions,
+    }
+
     attributes && this.setAttributes(attributes)
   }
 
@@ -48,16 +77,14 @@ export abstract class BaseDevice extends EventEmitter {
   public getAttributes = (): Record<string, any> => ({ ...Object.fromEntries(this._attributes), host: this.host, port: this.port })
   public setAttributes = (attributes: Record<string, any>): void => { this._attributes = new Map(Object.entries(attributes)) }
 
-  public start(): Promise<this> {
+  public start(
+    options?: {
+      timeout?: number
+    },
+  ): Promise<this> {
     return new Promise(resolve => {
-      const {
-        type = 'tcp',
-        connectTimeout = 3000,
-        timeout = 3000,
-        encoding = 'utf8',
-        tcpOptions,
-        udpOptions,
-      } = this._options ?? {}
+      const timeout = options?.timeout ?? this._options.connectionTimeout
+      const { type, encoding, tcpOptions, udpOptions } = this._options
 
       if (this._client instanceof Udp) {
         return resolve(this)
@@ -80,22 +107,20 @@ export abstract class BaseDevice extends EventEmitter {
 
       if (type === 'tcp') {
         this._client = new Tcp(tcpOptions)
-          .setTimeout(connectTimeout)
+          .setTimeout(timeout)
           .once('timeout', onConnectTimeout)
           .on('error', onError)
           .once('connect', () => {
             onStart()
             ;(this._client as Tcp)
-              .off('timeout', onConnectTimeout)
               .setEncoding(encoding)
-              .setTimeout(timeout)
               .once('close', onStop)
               .on('data', onMessage)
             resolve(this)
           })
           .connect(this.port, this.host)
       } else if (type.startsWith('udp')) {
-        this._client = createUdp({ type, reuseAddr: true, ...udpOptions })
+        this._client = createUdp(udpOptions)
           .on('error', onError)
           .once('listening', () => {
             onStart()
@@ -127,10 +152,10 @@ export abstract class BaseDevice extends EventEmitter {
       return new Promise((resolve, reject) => {
         const onCallback = (err?: Error | null) => err ? reject(err) : resolve(this)
         if (!this._client) {
-          onCallback(new Error('Socket is closed'))
+          onCallback(new Error(`${ this._options.type } socket is closed`))
         } else if (this._client instanceof Udp) {
           this._client.send(data, 0, data.length, this.port, this.host, onCallback)
-        } else if (this._client instanceof Tcp) {
+        } else {
           this._client.write(data, onCallback)
         }
       })
@@ -139,30 +164,38 @@ export abstract class BaseDevice extends EventEmitter {
 
   public generateId = (): number => ++BaseDevice._autoIncrementId
 
-  public request(uuid: string, data: string | Uint8Array, options?: { deconnect: boolean }): Promise<any> {
-    this.onRequest(uuid, data)
-    let timer: any
-
-    const clear = () => {
-      this._waitingRequests.delete(uuid)
-      timer && clearTimeout(timer)
-    }
-
+  public request(
+    uuid: string,
+    data: string | Uint8Array,
+    options?: {
+      keepAlive?: boolean
+      timeout?: number
+    },
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
+      let timer: any
+      const timeout = options?.timeout ?? this._options.requestTimeout
+
+      this.onRequest(uuid, data)
+
+      const onFinally = () => {
+        this._waitingRequests.delete(uuid)
+        timer && clearTimeout(timer)
+        !options?.keepAlive && this.stop()
+      }
+
       const onResolve = (res: any) => {
-        clear()
         this.onResponse(uuid, res)
         resolve(res)
-        options?.deconnect && this.stop()
+        onFinally()
       }
 
       const onReject = (err: any) => {
-        clear()
         reject(err)
-        options?.deconnect && this.stop()
+        onFinally()
       }
 
-      timer = setTimeout(() => onReject(new Error(`Request timeout ${ uuid }`)), 500)
+      timer = setTimeout(() => onReject(new Error(`Request timeout - uuid: ${ uuid }`)), timeout)
 
       this._waitingRequests.set(uuid, {
         resolve: onResolve,

@@ -19,27 +19,33 @@ export class Accessory extends BaseAccessory {
   }
 
   protected async setup() {
-    await this.device.miIoInfo()
-    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
-    this.setCharacteristic('AccessoryInformation.Model', this.device.model)
-    this.setCharacteristic('AccessoryInformation.Name', this.device.model)
-    this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.id)
-    this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.fwVer)
-    if (this.device.model?.includes('airpurifier')) {
+    await this.device.getInfo()
+    await this.setupInfo()
+    const model = this.device.model
+    if (model?.includes('wifispeaker')) {
+      this.setupWifispeaker()
+    } else if (model?.includes('airpurifier')) {
       this.setupAirPurifier()
     }
   }
 
+  protected async setupInfo() {
+    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
+    this.setCharacteristic('AccessoryInformation.Model', this.device.getAttribute('model'))
+    this.setCharacteristic('AccessoryInformation.Name', this.device.getAttribute('name') ?? this.device.getAttribute('model'))
+    this.setCharacteristic('AccessoryInformation.SerialNumber', this.device.did)
+    this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.getAttribute('fw_ver') ?? this.device.getAttribute('extra.fw_version'))
+  }
+
   protected async setupAirPurifier() {
     this.getService('AirPurifier', this.device.model)
-    const [power] = await this.device.call('get_prop', ['power'])
-    this.device.setAttribute('power', power)
+    this.device.setAttribute('power', await this.device.getProp('power'))
     this.onCharacteristic('AirPurifier.Active', {
       onGet: () => this.device.getAttribute('power') === 'on'
         ? this.Characteristic.Active.ACTIVE
         : this.Characteristic.Active.INACTIVE,
       onSet: async val => {
-        await this.device.call('set_power', [val ? 'on' : 'off'])
+        await this.device.setProp('power', val ? 'on' : 'off')
         this.device.setAttribute('power', val ? 'on' : 'off')
       },
     })
@@ -49,6 +55,10 @@ export class Accessory extends BaseAccessory {
     this.onCharacteristic('AirPurifier.TargetAirPurifierState', {
       onGet: () => this.Characteristic.TargetAirPurifierState.MANUAL,
     })
+  }
+
+  protected async setupWifispeaker() {
+
   }
 
   public save() {

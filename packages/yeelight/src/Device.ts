@@ -240,7 +240,7 @@ export class Device extends BaseDevice {
 
   public call(method: string, params: any[] = []): Promise<any> {
     const id = this.generateId()
-    return this.request(String(id), JSON.stringify({ id, method, params }) + EOL)
+    return this.request(String(id), JSON.stringify({ id, method, params }) + EOL, { keepAlive: true })
       .then(val => val.result)
   }
 

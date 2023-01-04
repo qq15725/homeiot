@@ -1,5 +1,5 @@
 import { BaseDevice } from '@homeiot/shared'
-import { MiIO } from './MiIO'
+import { Protocol } from './protocol'
 import { Service } from './service'
 import type { DeviceInfo } from './types'
 
@@ -28,53 +28,61 @@ export class Device extends BaseDevice {
     return this.getAttribute('model')
   }
 
-  public get fwVer(): string | undefined {
-    return this.getAttribute('fw_ver')
-  }
-
-  public readonly protocol: MiIO
+  public readonly protocol: Protocol
   public readonly service: Service
 
   constructor(info: DeviceInfo) {
-    const { host = '0.0.0.0', port = 54321, serviceTokens, ...props } = info
-    super(host, port, props, { type: 'udp4' })
+    const { host = '0.0.0.0', port = 54321, serviceTokens, ...attributes } = info
+    super(host, port, attributes, { type: 'udp4' })
     if (this.stamp) {
       this.setAttribute('timestamp', Date.now())
     }
-    this.protocol = new MiIO(this.did, this.token)
+    this.protocol = new Protocol(this.did, this.token)
     this.service = new Service({ serviceTokens })
   }
 
   public setToken(token: string) {
     this.setAttribute('token', token)
-    this.protocol.setToken(token)
+    this.protocol.miio.setToken(token)
   }
 
-  public call(method: string, params: any = [], options?: { deconnect: boolean }): Promise<any> {
-    const id = this.generateId()
-    return this.request(String(id), JSON.stringify({ id, method, params }), options)
-      .then(val => val.result)
-  }
-
-  public send(data: string) {
-    const packet = this.protocol.encode(
-      data,
-      this.stamp && this.timestamp
-        ? this.stamp + Math.floor((Date.now() - this.timestamp) / 1000)
-        : undefined,
-    )
-    if (!packet) {
-      return Promise.reject(new Error('Token is required to call method'))
+  public async call(
+    method: string,
+    params: any = [],
+    options?: {
+      keepAlive?: boolean
+      timeout?: number
+    },
+  ): Promise<any> {
+    if (!this.stamp) {
+      await this.request('hello', this.protocol.miio.helloPacket)
     }
-    return super.send(packet)
+    const id = this.generateId()
+    const data = `${ JSON.stringify({ id, method, params }) }\r\n`
+    return this.request(String(id), data, options).then(val => val.result)
+  }
+
+  public send(data: string | Buffer) {
+    if (typeof data === 'string') {
+      const packet = this.protocol.miio.encode(
+        data,
+        this.stamp! + Math.floor((Date.now() - this.timestamp!) / 1000),
+      )
+      if (!packet) {
+        return Promise.reject(new Error('Token is required to call method'))
+      }
+      data = packet
+    }
+    return super.send(data)
   }
 
   protected onMessage(packet: Buffer) {
-    const data = this.protocol.decode(packet)
-    if (!data || !data.encrypted.length) return
+    const data = this.protocol.miio.decode(packet)
+    if (!data) return
     if (data.stamp > 0) {
       this.setAttribute('stamp', data.stamp)
       this.setAttribute('timestamp', Date.now())
+      this.getWaitingRequest('hello')?.resolve()
     }
     if (!data.decrypted) return
     const message = JSON.parse(data.decrypted)
@@ -91,13 +99,21 @@ export class Device extends BaseDevice {
     }
   }
 
-  public miIoInfo() {
-    return this.call('miIO.info').then(res => {
+  public getInfo() {
+    return (
+      this.token
+        ? this.call('miIO.info')
+        : this.service.miio.getDevice(this.did)
+    ).then(res => {
       for (const [key, val] of Object.entries(res)) {
         this.setAttribute(key, val)
       }
       return res
     })
+  }
+
+  public getSpec() {
+    return this.service.miotSpec.find(this.model!)
   }
 
   protected resovleIid(iid: string) {
@@ -119,7 +135,11 @@ export class Device extends BaseDevice {
   }
 
   public async getProp(iid: string) {
-    return this.getProps([iid]).then(res => res[0])
+    if (iid.includes('.')) {
+      return this.getProps([iid]).then(res => res[0])
+    } else {
+      return this.call('get_prop', [iid]).then(res => res[0])
+    }
   }
 
   public setProps(props: [string, any][]) {
@@ -134,7 +154,11 @@ export class Device extends BaseDevice {
   }
 
   public async setProp(iid: string, value: any) {
-    return this.setProps([[iid, value]]).then(res => res[0])
+    if (iid.includes('.')) {
+      return this.setProps([[iid, value]]).then(res => res[0])
+    } else {
+      return this.call(`set_${ iid }`, [value])
+    }
   }
 
   public action(iid: string, args: any[]) {

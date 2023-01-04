@@ -40,7 +40,7 @@ export class MiIO {
    *  |                                                               |
    *  |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
    */
-  public static helloPacket = Buffer.from(
+  public helloPacket = Buffer.from(
     '2131' + '0020'
     + 'ffffffff'
     + 'ffffffff'
@@ -65,7 +65,7 @@ export class MiIO {
     this.tokenIv = createHash('md5').update(this.tokenKey).update(this.token, 'hex').digest()
   }
 
-  public encode(data: string, stamp?: number): Buffer | undefined {
+  public encode(data: string, stamp: number): Buffer | undefined {
     // Missing token
     if (!this.token || !this.did || !this.tokenKey || !this.tokenIv) {
       return undefined
@@ -83,7 +83,7 @@ export class MiIO {
     // Unknown
     header.writeUInt32BE(0x00000000, 4)
     // Stamp
-    header.writeUInt32BE(stamp ?? 0xFFFFFFFF, 12)
+    header.writeUInt32BE(stamp, 12)
     // Device ID
     header.writeUInt32BE(this.did, 8)
     // MD5 Checksum

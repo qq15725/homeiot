@@ -7,7 +7,7 @@ import consola from 'consola'
 import { version } from '../package.json'
 import { getPasswordByTerminalInput, lookupFile, normalizePath } from './utils'
 import { cache } from './cache'
-import { cloudDeviceFormat, localDeviceFormat, specFormat } from './formats'
+import { cloudDeviceFormat, discoveredDeviceFormat, lanDeviceFormat, specFormat } from './formats'
 
 const { FancyReporter } = consola as any
 
@@ -59,7 +59,7 @@ export function createCli(
       new Discovery()
         .on('start', () => consola.start(`discovering devices. press ctrl+c to stop.${ os.EOL }`))
         .on('device', (device: Device) => {
-          consola.log(localDeviceFormat(device) + os.EOL)
+          consola.log(discoveredDeviceFormat(device) + os.EOL)
         })
         .start()
     })
@@ -105,32 +105,40 @@ export function createCli(
         const devices = await service.miio.getDevices()
         setDevices(devices)
         consola.log(isOutputRaw ? devices : devices.map(cloudDeviceFormat).join(os.EOL + os.EOL))
-      } else if (!iid) {
-        if (isNaN(Number(did))) {
-          const spec = await service.miotSpec.find(did)
-          consola.log(isOutputRaw ? spec : specFormat(spec))
+        return
+      }
+
+      if (isNaN(Number(did))) {
+        const spec = await service.miotSpec.find(did)
+        consola.log(isOutputRaw ? spec : specFormat(spec))
+        return
+      }
+
+      const info = getDevices().find(v => Number(v.did) === Number(did))
+      const device = new Device({
+        did: Number(did),
+        host: info?.localip,
+        token: useLAN ? info?.token : undefined,
+        serviceTokens: useLAN ? undefined : getServiceTokens(),
+      })
+      if (!iid) {
+        const info = await device.getInfo()
+        const spec = useLAN ? undefined : await device.getSpec()
+        const specUrl = `https://home.miot-spec.com/spec/${ info.model }`
+        if (isOutputRaw) {
+          consola.log({ info, spec, specUrl })
         } else {
-          const device = await service.miio.getDevice(did)
-          const spec = await service.miotSpec.find(device.model)
-          const specUrl = `https://home.miot-spec.com/spec/${ device.model }`
-          if (isOutputRaw) {
-            consola.log({ device, spec, specUrl })
+          if (useLAN) {
+            consola.log(lanDeviceFormat(info))
           } else {
             consola.info(`Device basic information${ os.EOL }`)
-            consola.log(cloudDeviceFormat(device) + os.EOL)
+            consola.log(cloudDeviceFormat(info) + os.EOL)
             consola.info(`Device specification${ os.EOL }`)
-            consola.log(specFormat(spec) + os.EOL)
+            consola.log(specFormat(spec!) + os.EOL)
             consola.info(`Device specification url ${ specUrl }`)
           }
         }
       } else {
-        const info = getDevices().find(v => Number(v.did) === Number(did))
-        const device = new Device({
-          did: Number(did),
-          host: info?.localip,
-          token: useLAN ? info?.token : undefined,
-          serviceTokens: getServiceTokens(),
-        })
         if (isAction) {
           const res = await device.action(iid, args)
           if (isOutputRaw) {
@@ -143,37 +151,19 @@ export function createCli(
           if (!isNaN(Number(value))) value = Number(value)
           if (value === 'true') value = true
           if (value === 'false') value = false
-          if (iid.includes('.')) {
-            if (args.length) {
-              const res = await device.setProp(iid, value)
-              if (isOutputRaw) {
-                consola.log(res)
-              } else {
-                consola.success('ok')
-              }
+          if (args.length) {
+            const res = await device.setProp(iid, value)
+            if (isOutputRaw) {
+              consola.log(res)
             } else {
-              const prop = await device.getProp(iid)
-              if (isOutputRaw) {
-                consola.log(prop)
-              } else {
-                consola.success(prop.value)
-              }
+              consola.success('ok')
             }
           } else {
-            if (args.length) {
-              const res = await device.setProp(iid, value)
-              if (isOutputRaw) {
-                consola.log(res)
-              } else {
-                consola.success('ok')
-              }
+            const prop = await device.getProp(iid)
+            if (isOutputRaw) {
+              consola.log(prop)
             } else {
-              const prop = await device.getProp(iid)
-              if (isOutputRaw) {
-                consola.log(prop)
-              } else {
-                consola.success(prop)
-              }
+              consola.success(prop.value ? prop.value : prop)
             }
           }
         }

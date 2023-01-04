@@ -8,21 +8,44 @@ export type BaseDiscoveryEvents = {
   stop: () => void
 }
 
+export interface BaseDiscoveryOptions {
+  serverHost?: string
+  serverPort?: number
+  multicastTtl: number
+  multicastInterface?: string
+  udpOptions: UdpOptions
+}
+
 export abstract class BaseDiscovery extends EventEmitter {
   private _client?: Udp
+  private readonly _options: BaseDiscoveryOptions
 
   constructor(
     public readonly multicastHost: string,
     public readonly multicastPort: number,
     public readonly helloPacket: string | Buffer,
-    public readonly options?: Partial<UdpOptions> & {
-      serverHost?: string
-      serverPort?: number
-      multicastTtl?: number
-      multicastInterface?: string
-    },
+    public readonly options?: Partial<BaseDiscoveryOptions>,
   ) {
     super()
+
+    const {
+      serverHost,
+      serverPort,
+      multicastTtl = 128,
+      multicastInterface,
+      udpOptions = {
+        type: 'udp4',
+        reuseAddr: true,
+      },
+    } = this.options ?? {}
+
+    this._options = {
+      serverHost,
+      serverPort,
+      multicastTtl,
+      multicastInterface,
+      udpOptions,
+    }
   }
 
   public sendHelloPacket(): Promise<this> {
@@ -42,14 +65,12 @@ export abstract class BaseDiscovery extends EventEmitter {
     if (this._client) return Promise.resolve(this)
 
     const {
-      type = 'udp4',
-      reuseAddr = true,
-      multicastTtl = 128,
+      multicastTtl,
       multicastInterface,
       serverPort,
       serverHost,
-      ...options
-    } = this.options ?? {}
+      udpOptions,
+    } = this._options
 
     const onError = this.onError.bind(this)
     const onStop = this.onStop.bind(this)
@@ -57,7 +78,7 @@ export abstract class BaseDiscovery extends EventEmitter {
 
     return new Promise(resolve => {
       const onListenError = (err: Error) => onError(err); resolve(this)
-      this._client = createSocket({ type, reuseAddr, ...options })
+      this._client = createSocket(udpOptions)
         .once('error', onListenError)
         .once('listening', () => {
           this._client

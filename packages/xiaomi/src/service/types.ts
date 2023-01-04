@@ -36,3 +36,42 @@ export interface ServiceConfig {
   deviceId: string
   log?: ServiceLogger
 }
+
+export interface MIoTSpecPropertyValue {
+  description: string
+  value: number
+}
+
+export interface MIoTSpecProperty {
+  access: ('read' | 'write' | 'notify')[]
+  description: string
+  format: 'bool' | 'uint8' | 'uint16' | 'uint32' | 'int8' | 'int16' | 'int32' | 'int64' | 'float' | 'string' | 'hex'
+  iid: number
+  type: string
+  'value-list'?: MIoTSpecPropertyValue[]
+  'value-range'?: number[]
+  unit?: string
+}
+
+export interface MIoTSpecService {
+  description: string
+  iid: number
+  properties: MIoTSpecProperty[]
+  type: string
+}
+
+export interface MIoTSpecInstance {
+  description: string
+  services: MIoTSpecService[]
+  type: string
+}
+
+export interface MIoTSpecType {
+  urn: 'urn'
+  namespace: 'miot-spec-v2' | 'bluetooth-spec'
+  type: 'template' | 'property' | 'action' | 'event' | 'service' | 'device'
+  name: string
+  value: number
+  vendorProduct: string
+  version: number
+}

@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import { ResponseError } from './errors'
 import type { Request } from './types'
-import type { Cloud } from './Cloud'
+import type { Service } from './index'
 import type { RequestInit, Response } from 'node-fetch'
 
 export abstract class Client {
@@ -16,7 +16,7 @@ export abstract class Client {
   }
 
   constructor(
-    protected app: Cloud,
+    protected app: Service,
   ) {
     //
   }
