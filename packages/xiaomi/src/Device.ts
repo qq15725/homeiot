@@ -30,6 +30,7 @@ export class Device extends BaseDevice {
 
   public readonly protocol: Protocol
   public readonly service: Service
+  public enableLANControl = false
 
   constructor(info: DeviceInfo) {
     const { host = '0.0.0.0', port = 54321, serviceTokens, ...attributes } = info
@@ -104,7 +105,7 @@ export class Device extends BaseDevice {
   }
 
   public getInfo() {
-    return this.token
+    return this.enableLANControl
       ? this.call('miIO.info')
       : this.service.miio.getDevice(this.did)
   }
@@ -120,8 +121,16 @@ export class Device extends BaseDevice {
     return { siid: Number(siid), piid: Number(piid) }
   }
 
+  protected parseProp(result: Record<string, any>) {
+    if (typeof result === 'object') {
+      'code' in result && this.service.miot.catchError(result.code)
+      return 'value' in result ? result.value : result
+    }
+    return result
+  }
+
   public getProps(keys: string[]) {
-    if (this.token) {
+    if (this.enableLANControl) {
       if (keys.length && keys[0].includes('.')) {
         return this.call('get_properties', keys.map(iid => {
           const { siid, piid } = this.resovleIid(iid)
@@ -129,19 +138,19 @@ export class Device extends BaseDevice {
         }))
       }
       return this.call('get_prop', keys)
+        .then(result => result.map((val: any) => this.parseProp(val)))
     } else {
       return this.service.miot.getProps(this.did, keys)
+        .then(result => result.map((val: any) => this.parseProp(val)))
     }
   }
 
   public async getProp(key: string) {
-    const result = await this.getProps([key]).then(res => res[0])
-    'code' in result && this.service.miot.catchError(result.code)
-    return 'value' in result ? result.value : result
+    return await this.getProps([key]).then(res => res[0])
   }
 
   public setProps(props: [string, any][]) {
-    if (this.token) {
+    if (this.enableLANControl) {
       return this.call('set_properties', props.map(val => {
         const { siid, piid } = this.resovleIid(val[0])
         return { did: String(this.did), siid, piid, value: val[1] }
@@ -160,7 +169,7 @@ export class Device extends BaseDevice {
   }
 
   public action(key: string, args: any[] = []) {
-    if (this.token) {
+    if (this.enableLANControl) {
       const { siid, piid } = this.resovleIid(key)
       return this.call('action', {
         did: String(this.did), siid, aiid: piid, in: args,

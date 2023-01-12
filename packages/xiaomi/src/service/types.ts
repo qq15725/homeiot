@@ -43,27 +43,36 @@ export interface MIoTSpecPropertyValue {
 }
 
 export interface MIoTSpecProperty {
-  access: ('read' | 'write' | 'notify')[]
-  description: string
-  format: 'bool' | 'uint8' | 'uint16' | 'uint32' | 'int8' | 'int16' | 'int32' | 'int64' | 'float' | 'string' | 'hex'
   iid: number
   type: string
+  description: string
+  access: ('read' | 'write' | 'notify')[]
+  format: 'bool' | 'uint8' | 'uint16' | 'uint32' | 'int8' | 'int16' | 'int32' | 'int64' | 'float' | 'string' | 'hex'
   'value-list'?: MIoTSpecPropertyValue[]
   'value-range'?: number[]
   unit?: string
 }
 
-export interface MIoTSpecService {
-  description: string
+export interface MIoTSpecAction {
   iid: number
-  properties: MIoTSpecProperty[]
   type: string
+  description: string
+  in: number[]
+  out: number[]
+}
+
+export interface MIoTSpecService {
+  iid: number
+  type: string
+  description: string
+  properties: MIoTSpecProperty[]
+  actions?: MIoTSpecAction[]
 }
 
 export interface MIoTSpecInstance {
+  type: string
   description: string
   services: MIoTSpecService[]
-  type: string
 }
 
 export interface MIoTSpecType {

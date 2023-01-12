@@ -1,4 +1,5 @@
 import os from 'node:os'
+import type { MIoTSpecAction, MIoTSpecInstance, MIoTSpecProperty, MIoTSpecService } from '@homeiot/xiaomi'
 
 const styles = {
   reset: '\x1B[0m',
@@ -30,41 +31,100 @@ function color(source: string, style: keyof typeof styles = 'bright') {
   return `${ styles[style] }${ source }${ styles.reset }`
 }
 
-export function specFormat(info: Record<string, any>) {
+function parseName(type: string) {
+  return type.split(':')?.[3] ?? ''
+}
+
+function pad(length: number) {
+  return String().padEnd(length, ' ')
+}
+
+export function specFormat(instance: MIoTSpecInstance) {
+  const { type, services } = instance
+  const name = parseName(type)
   return [
-    info.description,
-    info.services?.map(serviceFormat).join(os.EOL),
+    name,
+    ...services.map(serviceFormat)
+      .join(os.EOL)
+      .split(os.EOL)
+      .map(str => `${ pad(2) }${ str }`),
+  ]
+    .join(os.EOL)
+}
+
+export function serviceFormat(service: MIoTSpecService) {
+  const { iid, type, properties, actions } = service
+  const siid = String(iid)
+  const name = parseName(type)
+  return [
+    `${ siid } ${ name }`,
+    [
+      actions && color('Properties', 'grey'),
+      properties.map(property => {
+        const piid = property.iid
+        const prefix = `${ siid }.${ piid } `
+        return prefix
+          + propertyFormat(property)
+            .split(os.EOL)
+            .map((str, index) => index ? `${ pad(prefix.length) }${ str }` : str)
+            .join(os.EOL)
+      }),
+
+      actions && [
+        color('Actions', 'grey'),
+        ...actions.map(action => {
+          const aiid = action.iid
+          const prefix = `${ siid }.${ aiid } `
+          return prefix
+            + actionFormat(action)
+              .split(os.EOL)
+              .map((str, index) => index ? `${ pad(prefix.length) }${ str }` : str)
+              .join(os.EOL)
+        }),
+      ],
+    ]
+      .filter(Boolean)
+      .flat()
+      .join(os.EOL)
+      .split(os.EOL)
+      .map(str => `${ pad(siid.length + 1) }${ str }`),
+  ]
+    .flat()
+    .join(os.EOL)
+}
+
+export function propertyFormat(property: MIoTSpecProperty) {
+  const { type, access, format, 'value-list': valueList, 'value-range': range } = property
+  const name = parseName(type)
+  const accesses = access.map(val => {
+    if (val === 'read') {
+      return color(val, 'green')
+    } else if (val === 'write') {
+      return color(val, 'cyan')
+    } else {
+      return color(val, 'grey')
+    }
+  }).join(color(',', 'grey'))
+  const options = valueList
+    ?.map(v => `${ v.value }: ${ v.description }`)
+    .join(' ')
+  return [
+    `${ name } ${ color(format, 'grey') } ${ accesses }`,
+    options && color(`options ${ options }`, 'grey'),
+    range && color(`range ${ range[0] } ~ ${ range[1] } step size ${ range[2] }`, 'grey'),
   ]
     .filter(Boolean)
     .join(os.EOL)
 }
 
-export function actionFormat(siid: number, info: Record<string, any>) {
+export function actionFormat(action: MIoTSpecAction) {
+  const { type } = action
+  const name = parseName(type)
   return [
-    `${ color(`${ siid }.${ info.iid }`) } ${ info.description }`,
-    info.in.join(' ') || '_',
-    info.out.join(' ') || '_',
-  ].join(', ')
-}
-
-export function propertyFormat(siid: number, info: Record<string, any>) {
-  return [
-    `${ color(`${ siid }.${ info.iid }`) } ${ info.description }`,
-    info.format,
-    info.access.join(' ') || '_',
-  ].join(', ')
-}
-
-export function serviceFormat(info: Record<string, any>) {
-  return [
-    `  ${ info.iid } ${ info.description }`,
-    info.properties && color('    Properties', 'grey'),
-    info.properties?.map((v: any) => `      ${ propertyFormat(info.iid, v) }`).join(os.EOL),
-    info.actions && color('    Actions', 'grey'),
-    info.actions?.map((v: any) => `      ${ actionFormat(info.iid, v) }`).join(os.EOL),
-  ]
-    .filter(Boolean)
-    .join(os.EOL)
+    name,
+    color(`${ action.in.length }`, 'grey'),
+    color(`${ action.out.length }`, 'grey'),
+  ].join(' ')
 }
 
 export function discoveredDeviceFormat(info: Record<string, any>) {
