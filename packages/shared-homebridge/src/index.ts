@@ -1,2 +1,1 @@
-export * from './BaseAccessory'
-export * from './BasePlatform'
+export const TODO = 'TODO'

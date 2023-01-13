@@ -6,13 +6,6 @@ export interface Request {
   context?: Record<string, any>
 }
 
-export interface ServiceLogger {
-  info(message: string, ...parameters: any[]): void
-  warn(message: string, ...parameters: any[]): void
-  error(message: string, ...parameters: any[]): void
-  debug(message: string, ...parameters: any[]): void
-}
-
 export interface ServiceToken {
   userId: number
   passToken: string
@@ -34,7 +27,6 @@ export interface ServiceConfig {
   serviceTokens: Record<string, ServiceToken>
   userAgent: string
   deviceId: string
-  log?: ServiceLogger
 }
 
 export interface MIoTSpecPropertyValue {
@@ -65,7 +57,7 @@ export interface MIoTSpecService {
   iid: number
   type: string
   description: string
-  properties: MIoTSpecProperty[]
+  properties?: MIoTSpecProperty[]
   actions?: MIoTSpecAction[]
 }
 

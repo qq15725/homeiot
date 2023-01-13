@@ -1,4 +1,4 @@
-import EventEmitter from 'events'
+import { EventEmitter } from '@homeiot/shared'
 import { randomString } from './utils'
 import { Account } from './Account'
 import { MiIO } from './MiIO'

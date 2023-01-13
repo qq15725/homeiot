@@ -59,16 +59,18 @@ export function serviceFormat(service: MIoTSpecService) {
   return [
     `${ siid } ${ name }`,
     [
-      actions && color('Properties', 'grey'),
-      properties.map(property => {
-        const piid = property.iid
-        const prefix = `${ siid }.${ piid } `
-        return prefix
-          + propertyFormat(property)
-            .split(os.EOL)
-            .map((str, index) => index ? `${ pad(prefix.length) }${ str }` : str)
-            .join(os.EOL)
-      }),
+      properties && [
+        actions && color('Properties', 'grey'),
+        ...properties.map(property => {
+          const piid = property.iid
+          const prefix = `${ siid }.${ piid } `
+          return prefix
+            + propertyFormat(property)
+              .split(os.EOL)
+              .map((str, index) => index ? `${ pad(prefix.length) }${ str }` : str)
+              .join(os.EOL)
+        }),
+      ].filter(Boolean),
 
       actions && [
         color('Actions', 'grey'),

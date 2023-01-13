@@ -1,5 +1,5 @@
 import { MIoTSpecClient } from './MIoTSpecClient'
-import type { MIoTSpecInstance, MIoTSpecProperty, MIoTSpecService, MIoTSpecType } from './types'
+import type { MIoTSpecAction, MIoTSpecInstance, MIoTSpecProperty, MIoTSpecService, MIoTSpecType } from './types'
 
 export class MIoTSpec extends MIoTSpecClient {
   public async find(name: string): Promise<MIoTSpecInstance> {
@@ -50,7 +50,7 @@ export class MIoTSpec extends MIoTSpecClient {
     return this.request('/spec/actions')
   }
 
-  public findAction(type: string) {
+  public findAction(type: string): Promise<MIoTSpecAction> {
     return this.request(`/spec/action?type=${ type }`)
   }
 
@@ -62,8 +62,8 @@ export class MIoTSpec extends MIoTSpecClient {
     return this.request(`/spec/event?type=${ type }`)
   }
 
-  public parseType(string: string): MIoTSpecType {
-    const [urn, namespace, type, name, value, vendorProduct, version] = string.split(':')
+  public parseType(str: string): MIoTSpecType {
+    const [urn, namespace, type, name, value, vendorProduct, version] = str.split(':')
     return {
       urn,
       namespace,

@@ -1,55 +1,49 @@
-import { Device, Discovery } from '@homeiot/xiaomi'
-import { BasePlatform } from '@homeiot/shared-homebridge'
-import { Accessory } from './Accessory'
+import { Discovery, Service } from '@homeiot/xiaomi'
+import { configureAccessory } from './accessory'
+import { platformId, platformName } from './constants'
+import type { Context } from './types'
+import type { Device, DeviceInfo } from '@homeiot/xiaomi'
 import type {
   API,
-  DynamicPlatformPlugin,
+  Logging,
   PlatformAccessory,
+  PlatformConfig,
 } from 'homebridge'
 
-export class Platform extends BasePlatform<Accessory> implements DynamicPlatformPlugin {
-  public static readonly pluginIdentifier = '@homeiot/homebridge-xiaomi'
-  public static readonly platformName = 'xiaomi'
+export function createPlatform(log: Logging, config: PlatformConfig, api: API) {
+  const configured = new Set<string>()
+  const context: Context = { log, config, api, configured }
+  const { serviceTokens } = config
+  const uuid = api.hap.uuid.generate
+  const PlatformAccessory = api.platformAccessory
 
-  public static register(api: API) {
-    api.registerPlatform(Platform.pluginIdentifier, Platform.platformName, Platform)
-  }
-
-  protected onDidFinishLaunching() {
-    new Discovery()
-      .on('error', err => this.log.error(err))
-      .on('start', () => this.log.debug('Local discovery started'))
-      .on('device', this.onDidDiscoverDevice.bind(this))
-      .start()
-  }
-
-  protected onDidDiscoverDevice(device: Device) {
-    const id = device.id
-    if (!this.config.tokens[device.did]) return
-    // eslint-disable-next-line new-cap
-    const accessory = new this.api.platformAccessory(id, this.api.hap.uuid.generate(id))
-    accessory.context = { id, ...device.toObject() }
-    if (!this.accessories.has(id)) {
-      this.log(`Initializing new accessory ${ id } with name ${ id }...`)
-      this.api.registerPlatformAccessories(Platform.pluginIdentifier, Platform.platformName, [accessory])
+  api.on('didFinishLaunching', async () => {
+    try {
+      const service = new Service({ serviceTokens })
+      const devices = await service.miio.getDevices()
+      devices.forEach(deviceInfo => tryRegisterDeviceAsAnAccessory(deviceInfo as any))
+    } catch (err) {
+      new Discovery()
+        .on('error', err => log.error(err))
+        .on('start', () => log.debug('Local discovery started'))
+        .on('device', (device: Device) => tryRegisterDeviceAsAnAccessory(device.toObject()))
+        .start()
     }
-    this.onDidDiscoverAccessory(accessory)
+  })
+
+  function tryRegisterDeviceAsAnAccessory(deviceInfo: DeviceInfo) {
+    const did = String(deviceInfo.did)
+    if (!did || configured.has(did)) return
+    const name = deviceInfo.name ?? did
+    const accessory = new PlatformAccessory<DeviceInfo>(name, uuid(did))
+    accessory.context = deviceInfo
+    api.registerPlatformAccessories(platformId, platformName!, [accessory])
+    configureAccessory(accessory, context, true)
   }
 
-  protected onDidDiscoverAccessory(accessory: PlatformAccessory) {
-    const { context } = accessory
-    const { id, did } = context
-    if (!id) return
-    if (this.accessories.has(id)) {
-      //
-    } else {
-      const device = new Device({ ...context } as any)
-      if (!device.token) {
-        const token = this.config.tokens[did]
-        if (!token) return
-        device.setToken(token)
-      }
-      this.accessories.set(id, new Accessory(this, accessory, device))
-    }
+  return {
+    configureAccessory: (accessory: PlatformAccessory<DeviceInfo>) => {
+      configureAccessory(accessory, context)
+    },
   }
 }

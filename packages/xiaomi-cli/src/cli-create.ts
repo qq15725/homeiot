@@ -47,9 +47,12 @@ export function createCli(
   const service = new Service({
     ...options,
     serviceTokens: getServiceTokens(),
-    log: consola,
   })
+
+  service
     .on('serviceToken', () => setServiceTokens(service.config.serviceTokens))
+    .on('request', data => consola.debug('[request]', data))
+    .on('response', data => consola.debug('[response]', data))
 
   const cli = cac('miot')
 

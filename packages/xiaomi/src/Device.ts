@@ -1,6 +1,7 @@
 import { BaseDevice } from '@homeiot/shared'
 import { Protocol } from './protocol'
 import { Service } from './service'
+import type { MIoTSpecAction, MIoTSpecInstance, MIoTSpecProperty } from './service'
 import type { DeviceInfo } from './types'
 
 export class Device extends BaseDevice {
@@ -28,6 +29,32 @@ export class Device extends BaseDevice {
     return this.get('model')
   }
 
+  public get spec(): MIoTSpecInstance | undefined {
+    return this.get('spec')
+  }
+
+  public get specName(): string | undefined {
+    return this.get('specName')
+  }
+
+  public get specNameIid(): Map<string, string> {
+    return new Map<string, string>(
+      Object.entries(this.get('specNameIid') ?? {}),
+    )
+  }
+
+  public get specProperties(): Map<string, MIoTSpecProperty> {
+    return new Map<string, MIoTSpecProperty>(
+      Object.entries(this.get('specProperties') ?? {}),
+    )
+  }
+
+  public get specActions(): Map<string, MIoTSpecAction> {
+    return new Map<string, MIoTSpecAction>(
+      Object.entries(this.get('specActions') ?? {}),
+    )
+  }
+
   public readonly protocol: Protocol
   public readonly service: Service
   public enableLANControl = false
@@ -39,11 +66,18 @@ export class Device extends BaseDevice {
     this.set('timestamp', undefined)
     this.protocol = new Protocol(this.did, this.token)
     this.service = new Service({ serviceTokens })
+    this.service.on('request', data => this.emit('request', data))
+    this.service.on('response', data => this.emit('response', data))
   }
 
-  public setToken(token: string) {
+  public openLANControl(token: string) {
     this.set('token', token)
     this.protocol.miio.setToken(token)
+    this.enableLANControl = true
+  }
+
+  public toObject(): DeviceInfo {
+    return super.toObject() as DeviceInfo
   }
 
   public async call(
@@ -98,10 +132,49 @@ export class Device extends BaseDevice {
   }
 
   public async setupInfo() {
-    const attributes = await this.getInfo()
-    for (const [key, val] of Object.entries(attributes)) {
+    const info = await this.getInfo()
+    for (const [key, val] of Object.entries(info)) {
       this.set(key, val)
     }
+  }
+
+  public async setupSpec() {
+    const spec = await this.getSpec()
+    const specNameIid: Record<string, string> = {}
+    const specProperties: Record<string, MIoTSpecProperty> = {}
+    const specActions: Record<string, MIoTSpecAction> = {}
+    spec.services.forEach(service => {
+      const { name: serviceName } = this.service.miotSpec.parseType(service.type)
+      service.properties?.forEach(property => {
+        const { name: propertyName } = this.service.miotSpec.parseType(property.type)
+        const name = `${ serviceName }:${ propertyName }`
+        specNameIid[name] = `${ service.iid }.${ property.iid }`
+        specProperties[name] = property
+      })
+      service.actions?.forEach(action => {
+        const { name: actionName } = this.service.miotSpec.parseType(action.type)
+        const name = `${ serviceName }:${ actionName }`
+        specNameIid[name] = `${ service.iid }.${ action.iid }`
+        specActions[name] = action
+      })
+    })
+    this.set('spec', spec)
+    this.set('specName', this.service.miotSpec.parseType(spec.type).name)
+    this.set('specNameIid', specNameIid)
+    this.set('specProperties', specProperties)
+    this.set('specActions', specActions)
+  }
+
+  public async setupProps() {
+    const names: string[] = []
+    for (const [name, property] of this.specProperties.entries()) {
+      if (!property.access.includes('read')) continue
+      names.push(name)
+    }
+    const props = await this.getProps(names.map(name => this.specNameIid.get(name)!))
+    props.forEach((val: any, index: number) => {
+      this.set(names[index], val)
+    })
   }
 
   public getInfo() {
@@ -121,15 +194,24 @@ export class Device extends BaseDevice {
     return { siid: Number(siid), piid: Number(piid) }
   }
 
-  protected parseProp(result: Record<string, any>) {
+  protected parseProp(result: Record<string, any>, throwError = false) {
     if (typeof result === 'object') {
-      'code' in result && this.service.miot.catchError(result.code)
+      if ('code' in result) {
+        try {
+          this.service.miot.catchError(result.code)
+        } catch (err) {
+          if (throwError) {
+            throw err
+          }
+          return undefined
+        }
+      }
       return 'value' in result ? result.value : result
     }
     return result
   }
 
-  public getProps(keys: string[]) {
+  public getProps(keys: string[], throwError = false) {
     if (this.enableLANControl) {
       if (keys.length && keys[0].includes('.')) {
         return this.call('get_properties', keys.map(iid => {
@@ -138,15 +220,15 @@ export class Device extends BaseDevice {
         }))
       }
       return this.call('get_prop', keys)
-        .then(result => result.map((val: any) => this.parseProp(val)))
+        .then(result => result.map((val: any) => this.parseProp(val, throwError)))
     } else {
       return this.service.miot.getProps(this.did, keys)
-        .then(result => result.map((val: any) => this.parseProp(val)))
+        .then(result => result.map((val: any) => this.parseProp(val, throwError)))
     }
   }
 
   public async getProp(key: string) {
-    return await this.getProps([key]).then(res => res[0])
+    return await this.getProps([key], true).then(res => res[0])
   }
 
   public setProps(props: [string, any][]) {
@@ -161,6 +243,9 @@ export class Device extends BaseDevice {
   }
 
   public async setProp(key: string, value: any) {
+    if (this.specNameIid.has(key)) {
+      key = this.specNameIid.get(key)!
+    }
     if (key.includes('.')) {
       return this.setProps([[key, value]]).then(res => res[0])
     } else {
@@ -169,6 +254,9 @@ export class Device extends BaseDevice {
   }
 
   public action(key: string, args: any[] = []) {
+    if (this.specNameIid.has(key)) {
+      key = this.specNameIid.get(key)!
+    }
     if (this.enableLANControl) {
       const { siid, piid } = this.resovleIid(key)
       return this.call('action', {

@@ -1,82 +1,120 @@
-import { BaseAccessory } from '@homeiot/shared-homebridge'
-import { Platform } from './Platform'
-import type { Device } from '@homeiot/xiaomi'
+import { Device } from '@homeiot/xiaomi'
+import { deviceModelsMap, sharedModels } from './models'
+import type { DeviceInfo } from '@homeiot/xiaomi'
 import type { PlatformAccessory } from 'homebridge'
+import type { CharacteristicModel, CharacteristicModelValue, Context } from './types'
 
-export class Accessory extends BaseAccessory {
-  constructor(
-    platform: Platform,
-    accessory: PlatformAccessory,
-    public readonly device: Device,
-  ) {
-    super(platform, accessory)
-    this.setup().catch(err => this.log.error(err))
+export async function configureAccessory(
+  accessory: PlatformAccessory<DeviceInfo>,
+  platformContext: Context,
+  wasRecentlyCreated = false,
+) {
+  const { log, config, api, configured } = platformContext
+  const { serviceTokens } = config
+  const { displayName, context: deviceInfo } = accessory
+
+  const did = String(deviceInfo.did)
+
+  if (!did || configured.has(did)) {
+    log.warn(`Ingnoring duplicate accessory ${ did } with name ${ displayName }`)
+    return
   }
 
-  protected async setup() {
-    const prefix = `${ this.device.host }:${ this.device.port }`
+  configured.add(did)
 
-    await this.device
-      .on('error', err => this.log.error(err))
-      .on('start', () => this.log.debug('[start]', prefix))
-      .on('stop', () => this.log.debug('[stop]', prefix))
-      .on('request', data => this.log.debug('[request]', prefix, data))
-      .on('response', data => this.log.debug('[response]', prefix, data))
-      .setupInfo()
+  const device = new Device({
+    serviceTokens,
+    ...deviceInfo,
+  })
 
-    const model = this.device.get('model')
+  const prefix = `${ device.host }:${ device.port } ${ displayName }`
 
-    this.setCharacteristic('AccessoryInformation.Manufacturer', Platform.platformName)
-    this.setCharacteristic('AccessoryInformation.Model', model)
-    this.setCharacteristic('AccessoryInformation.Name', this.device.get('name') ?? model)
-    this.setCharacteristic('AccessoryInformation.SerialNumber', String(this.device.did))
-    this.setCharacteristic('AccessoryInformation.FirmwareRevision', this.device.get('fw_ver') ?? this.device.get('extra.fw_version'))
+  device
+    .on('error', err => log.error(err))
+    .on('start', () => log.debug('[start]', prefix))
+    .on('stop', () => log.debug('[stop]', prefix))
+    .on('request', data => log.debug('[request]', prefix, JSON.stringify(data)))
+    .on('response', data => log.debug('[response]', prefix, JSON.stringify(data)))
 
-    if (model?.includes('wifispeaker')) {
-      this.setupWifispeaker()
-    } else if (model?.includes('airpurifier')) {
-      this.setupAirPurifier()
+  if (wasRecentlyCreated) {
+    log(`Initializing new accessory ${ did } with name ${ displayName }...`)
+    try {
+      await device.setupInfo()
+      await device.setupSpec()
+      accessory.context = device.toObject()
+      api.updatePlatformAccessories([accessory])
+    } catch (err: any) {
+      log.error(err)
+    }
+  } else {
+    log(`Loading accessory from cache: ${ displayName }`)
+  }
+
+  if (!device.specName) {
+    return log(`Missing spec name from accessory ${ did } with name ${ displayName }`)
+  }
+
+  if (!(device.specName in deviceModelsMap)) {
+    return log(`Missing model map from accessory ${ did } with name ${ displayName }`)
+  }
+
+  await device.setupProps()
+
+  const specName = device.specName!
+  const models = [
+    ...sharedModels,
+    ...deviceModelsMap[specName],
+  ]
+
+  for (const model of models) {
+    const { name = device.get('name') ?? specName, id, service: serviceKey } = model
+    const Service = (api.hap.Service as any)[serviceKey]
+    const service = (
+      id
+        ? accessory.getServiceById(Service, id)
+        : accessory.getService(Service)
+    ) || accessory.addService(new Service(name, id))
+    for (const [characteristicKey, characteristicModel] of Object.entries(model.characteristics)) {
+      const value = parseCharacteristicModel(characteristicModel, device)
+      if (!value) continue
+      const characteristic = service.getCharacteristic(
+        (api.hap.Characteristic as any)[characteristicKey],
+      )
+      const onGet = () => value.get(device.get(value.name), device)
+      characteristic
+        .onGet(onGet)
+        .updateValue(onGet())
+      if (value.set) {
+        characteristic.onSet(async val => {
+          try {
+            val = await value.set!(val, device)
+            if (val !== undefined) {
+              await device.setProp(value.name, val)
+              device.set(value.name, val)
+            }
+          } catch (err: any) {
+            log.error(err)
+          }
+        })
+      }
     }
   }
+}
 
-  protected async setupWifispeaker() {
-    this.getService('SmartSpeaker', this.device.model)
-    this.device.set('3.1', await this.device.getProp('3.1'))
-    this.onCharacteristic('SmartSpeaker.CurrentMediaState', {
-      onGet: () => this.device.get('3.1') === 1
-        ? this.Characteristic.CurrentMediaState.PLAY
-        : this.Characteristic.CurrentMediaState.STOP,
-    })
-    this.onCharacteristic('SmartSpeaker.TargetMediaState', {
-      onGet: () => this.device.get('3.1') === 1
-        ? this.Characteristic.CurrentMediaState.STOP
-        : this.Characteristic.CurrentMediaState.PLAY,
-      onSet: val => this.device.action(val ? '3.3' : '3.2'),
-    })
+export function parseCharacteristicModel(prop: CharacteristicModel, device: Device): CharacteristicModelValue | undefined {
+  if (typeof prop === 'string') {
+    return {
+      name: prop,
+      get: v => v,
+      set: v => v,
+    }
   }
-
-  protected async setupAirPurifier() {
-    this.getService('AirPurifier', this.device.model)
-    this.device.set('power', await this.device.getProp('power'))
-    this.onCharacteristic('AirPurifier.Active', {
-      onGet: () => this.device.get('power') === 'on'
-        ? this.Characteristic.Active.ACTIVE
-        : this.Characteristic.Active.INACTIVE,
-      onSet: async val => {
-        await this.device.setProp('power', val ? 'on' : 'off')
-        this.device.set('power', val ? 'on' : 'off')
-      },
-    })
-    this.onCharacteristic('AirPurifier.CurrentAirPurifierState', {
-      onGet: () => this.Characteristic.CurrentAirPurifierState.PURIFYING_AIR,
-    })
-    this.onCharacteristic('AirPurifier.TargetAirPurifierState', {
-      onGet: () => this.Characteristic.TargetAirPurifierState.MANUAL,
-    })
+  if (typeof prop === 'function') {
+    const value = prop(device)
+    if (typeof value === 'string') {
+      return parseCharacteristicModel(value, device)
+    }
+    return value
   }
-
-  public save() {
-    this.accessory.context = this.device.toObject()
-    super.save()
-  }
+  return prop
 }

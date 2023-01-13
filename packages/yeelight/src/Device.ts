@@ -548,4 +548,8 @@ export class Device extends BaseDevice {
   }
 
   // bg_adjust_xx
+
+  public toObject(): DeviceInfo {
+    return super.toObject() as DeviceInfo
+  }
 }
