@@ -141,6 +141,7 @@ export abstract class BaseDevice extends EventEmitter {
           .once('connect', () => {
             onStart()
             ;(this._client as Tcp)
+              .off('timeout', onConnectionTimeout)
               .off('error', onConnectionError)
               .setEncoding(encoding)
               .once('close', onStop)

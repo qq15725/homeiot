@@ -27,7 +27,7 @@ export function createPlatform(log: Logging, config: PlatformConfig, api: API) {
   function tryRegisterDeviceAsAnAccessory(deviceInfo: DeviceInfo) {
     const id = String(deviceInfo.id)
     if (!id || configured.has(id)) return
-    const name = deviceInfo.name ?? id
+    const name = deviceInfo.name || deviceInfo.model || id
     const accessory = new PlatformAccessory<DeviceInfo>(name, uuid(id))
     accessory.context = deviceInfo
     api.registerPlatformAccessories(platformId, platformName, [accessory])

@@ -242,7 +242,7 @@ export class Device extends BaseDevice {
     const uuid = this.uuid()
     const data = JSON.stringify({ id: Number(uuid), method, params })
     const options = { keepAlive: true, uuid }
-    return this.request(data, options).then(val => val.result)
+    return this.request(data + EOL, options).then(val => val.result)
   }
 
   protected onMessage(message: Buffer) {
