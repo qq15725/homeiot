@@ -1,7 +1,6 @@
 import { Discovery, Service } from '@homeiot/xiaomi'
 import { configureAccessory } from './accessory'
 import { platformId, platformName } from './constants'
-import type { Context } from './types'
 import type { Device, DeviceInfo } from '@homeiot/xiaomi'
 import type {
   API,
@@ -10,9 +9,16 @@ import type {
   PlatformConfig,
 } from 'homebridge'
 
+export interface PlatformContext {
+  log: Logging
+  config: PlatformConfig
+  api: API
+  configured: Set<string>
+}
+
 export function createPlatform(log: Logging, config: PlatformConfig, api: API) {
   const configured = new Set<string>()
-  const context: Context = { log, config, api, configured }
+  const context: PlatformContext = { log, config, api, configured }
   const { serviceTokens } = config
   const uuid = api.hap.uuid.generate
   const PlatformAccessory = api.platformAccessory

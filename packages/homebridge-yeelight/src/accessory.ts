@@ -1,5 +1,5 @@
 import { Device } from '@homeiot/yeelight'
-import type { Context } from './types'
+import type { PlatformContext } from './platform'
 import type { DeviceInfo } from '@homeiot/yeelight'
 import type { PlatformAccessory } from 'homebridge'
 
@@ -9,7 +9,7 @@ function convertColorTemperature(value: number): number {
 
 export async function configureAccessory(
   accessory: PlatformAccessory<DeviceInfo>,
-  platformContext: Context,
+  platformContext: PlatformContext,
   wasRecentlyCreated = false,
 ) {
   const { log, config, api, configured } = platformContext

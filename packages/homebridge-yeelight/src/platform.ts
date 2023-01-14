@@ -1,7 +1,6 @@
 import { Discovery } from '@homeiot/yeelight'
 import { configureAccessory } from './accessory'
 import { platformId, platformName } from './constants'
-import type { Context } from './types'
 import type {
   API,
   Logging,
@@ -10,9 +9,16 @@ import type {
 } from 'homebridge'
 import type { Device, DeviceInfo } from '@homeiot/yeelight'
 
+export interface PlatformContext {
+  log: Logging
+  config: PlatformConfig
+  api: API
+  configured: Set<string>
+}
+
 export function createPlatform(log: Logging, config: PlatformConfig, api: API) {
   const configured = new Set<string>()
-  const context: Context = { log, config, api, configured }
+  const context: PlatformContext = { log, config, api, configured }
   const uuid = api.hap.uuid.generate
   const PlatformAccessory = api.platformAccessory
 
