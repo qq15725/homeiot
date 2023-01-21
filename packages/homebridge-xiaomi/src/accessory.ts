@@ -51,17 +51,17 @@ export async function configureAccessory(
     log(`Loading accessory from cache: ${ displayName }`)
   }
 
-  if (!device.specName) {
+  if (!device.spec?.name) {
     return log(`Missing spec name from accessory ${ did } with name ${ displayName }`)
   }
 
-  if (!(device.specName in models)) {
+  if (!(device.spec.name in models)) {
     return log(`Missing model map from accessory ${ did } with name ${ displayName }`)
   }
 
   await device.setupProps()
 
-  const model = models[device.specName! as keyof typeof models]
+  const model = models[device.spec.name! as keyof typeof models]
 
   bindModelToAccessory(model, accessory, { log, config, api, device })
 }

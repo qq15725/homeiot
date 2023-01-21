@@ -25,9 +25,9 @@ export const airer = defineModel(env => {
         characteristics: [
           {
             uuid: On,
-            get: () => device.get('light.on'),
+            get: () => device.get('light:on'),
             set: async val => {
-              await device.setProp('light.on', val)
+              await device.setProp('light:on', val)
             },
           },
         ],

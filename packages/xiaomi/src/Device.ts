@@ -29,30 +29,57 @@ export class Device extends BaseDevice {
     return this.get('model')
   }
 
-  public get spec(): MIoTSpecInstance | undefined {
-    return this.get('spec')
+  private _specInfo?: {
+    name: string | undefined
+    nameIid: Map<string, string>
+    properties: Map<string, MIoTSpecProperty>
+    actions: Map<string, MIoTSpecAction>
   }
 
-  public get specName(): string | undefined {
-    return this.get('specName')
-  }
+  public get spec(): (
+    MIoTSpecInstance & {
+      name: string | undefined
+      nameIid: Map<string, string>
+      properties: Map<string, MIoTSpecProperty>
+      actions: Map<string, MIoTSpecAction>
+    }
+  ) | undefined {
+    const spec = this.get('spec') as MIoTSpecInstance | undefined
 
-  public get specNameIid(): Map<string, string> {
-    return new Map<string, string>(
-      Object.entries(this.get('specNameIid') ?? {}),
-    )
-  }
+    if (!spec) return undefined
 
-  public get specProperties(): Map<string, MIoTSpecProperty> {
-    return new Map<string, MIoTSpecProperty>(
-      Object.entries(this.get('specProperties') ?? {}),
-    )
-  }
+    if (!this._specInfo) {
+      const name = spec?.type ? this.service.miotSpec.parseType(spec.type).name : undefined
+      const nameIid = new Map<string, string>()
+      const properties = new Map<string, MIoTSpecProperty>()
+      const actions = new Map<string, MIoTSpecAction>()
+      spec?.services.forEach(service => {
+        const { name: serviceName } = this.service.miotSpec.parseType(service.type)
+        service.properties?.forEach(property => {
+          const { name: propertyName } = this.service.miotSpec.parseType(property.type)
+          const name = `${ serviceName.replace('.', '_') }:${ propertyName.replace('.', '_') }`
+          nameIid.set(name, `${ service.iid }.${ property.iid }`)
+          properties.set(name, property)
+        })
+        service.actions?.forEach(action => {
+          const { name: actionName } = this.service.miotSpec.parseType(action.type)
+          const name = `${ serviceName.replace('.', '_') }:${ actionName.replace('.', '_') }`
+          nameIid.set(name, `${ service.iid }.${ action.iid }`)
+          actions.set(name, action)
+        })
+      })
+      this._specInfo = {
+        name,
+        nameIid,
+        properties,
+        actions,
+      }
+    }
 
-  public get specActions(): Map<string, MIoTSpecAction> {
-    return new Map<string, MIoTSpecAction>(
-      Object.entries(this.get('specActions') ?? {}),
-    )
+    return {
+      ...spec,
+      ...this._specInfo,
+    }
   }
 
   public readonly protocol: Protocol
@@ -132,46 +159,21 @@ export class Device extends BaseDevice {
   }
 
   public async setupInfo() {
-    const info = await this.getInfo()
-    for (const [key, val] of Object.entries(info)) {
-      this.set(key, val)
-    }
+    this.fill(await this.getInfo())
   }
 
   public async setupSpec() {
-    const spec = await this.getSpec()
-    const specNameIid: Record<string, string> = {}
-    const specProperties: Record<string, MIoTSpecProperty> = {}
-    const specActions: Record<string, MIoTSpecAction> = {}
-    spec.services.forEach(service => {
-      const { name: serviceName } = this.service.miotSpec.parseType(service.type)
-      service.properties?.forEach(property => {
-        const { name: propertyName } = this.service.miotSpec.parseType(property.type)
-        const name = `${ serviceName }:${ propertyName }`
-        specNameIid[name] = `${ service.iid }.${ property.iid }`
-        specProperties[name] = property
-      })
-      service.actions?.forEach(action => {
-        const { name: actionName } = this.service.miotSpec.parseType(action.type)
-        const name = `${ serviceName }:${ actionName }`
-        specNameIid[name] = `${ service.iid }.${ action.iid }`
-        specActions[name] = action
-      })
-    })
-    this.set('spec', spec)
-    this.set('specName', this.service.miotSpec.parseType(spec.type).name)
-    this.set('specNameIid', specNameIid)
-    this.set('specProperties', specProperties)
-    this.set('specActions', specActions)
+    this.set('spec', await this.getSpec())
   }
 
   public async setupProps() {
+    if (!this.spec) return
     const names: string[] = []
-    for (const [name, property] of this.specProperties.entries()) {
+    for (const [name, property] of this.spec.properties.entries()) {
       if (!property.access.includes('read')) continue
       names.push(name)
     }
-    const props = await this.getProps(names.map(name => this.specNameIid.get(name)!))
+    const props = await this.getProps(names.map(name => this.spec!.nameIid.get(name)!))
     props.forEach((val: any, index: number) => {
       this.set(names[index], val)
     })
@@ -243,8 +245,8 @@ export class Device extends BaseDevice {
   }
 
   public async setProp(key: string, value: any) {
-    if (this.specNameIid.has(key)) {
-      key = this.specNameIid.get(key)!
+    if (this.spec?.nameIid.has(key)) {
+      key = this.spec.nameIid.get(key)!
     }
     if (key.includes('.')) {
       return this.setProps([[key, value]]).then(res => res[0])
@@ -254,8 +256,8 @@ export class Device extends BaseDevice {
   }
 
   public action(key: string, args: any[] = []) {
-    if (this.specNameIid.has(key)) {
-      key = this.specNameIid.get(key)!
+    if (this.spec?.nameIid.has(key)) {
+      key = this.spec.nameIid.get(key)!
     }
     if (this.enableLANControl) {
       const { siid, piid } = this.resovleIid(key)

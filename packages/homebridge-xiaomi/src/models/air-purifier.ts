@@ -56,9 +56,9 @@ export const airPurifier = defineModel(env => {
     'motor-speed:favorite-fan-level',
     'motor-speed:motor-favorite',
   ].forEach(key => {
-    if (device.specProperties.has(key)) {
+    if (device.spec?.properties.has(key)) {
       speed = key
-      speedRange = device.specProperties.get(key)?.['value-range'] as any
+      speedRange = device.spec.properties.get(key)?.['value-range'] as any
     }
   })
 
@@ -76,7 +76,9 @@ export const airPurifier = defineModel(env => {
                 : Active.INACTIVE
             },
             set: async val => {
-              await device.setProp('air-purifier:on', Boolean(val))
+              if (!device.get('air-purifier:on')) {
+                await device.setProp('air-purifier:on', Boolean(val))
+              }
             },
           },
           {
@@ -102,7 +104,7 @@ export const airPurifier = defineModel(env => {
           {
             uuid: LockPhysicalControls,
             get: () => {
-              return device.get('physical-controls-locked:physical-controls-locked')
+              return device.get('physical-controls-locked:physical-controls-locked', false)
             },
             set: async val => {
               await device.setProp('physical-controls-locked:physical-controls-locked', val)
@@ -120,7 +122,7 @@ export const airPurifier = defineModel(env => {
           {
             uuid: AirQuality,
             get: () => {
-              const density = device.get('environment:pm2.5-density')
+              const density = device.get('environment:pm2_5-density')
               if (density === undefined) {
                 return AirQuality.UNKNOWN
               } else if (density < 10) {
@@ -137,7 +139,7 @@ export const airPurifier = defineModel(env => {
           },
           {
             uuid: PM2_5Density,
-            get: () => device.get('environment:pm2.5-density'),
+            get: () => device.get('environment:pm2_5-density'),
           },
         ],
       },

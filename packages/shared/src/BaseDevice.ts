@@ -1,7 +1,7 @@
 import { Socket as Udp, createSocket as createUdp } from 'node:dgram'
 import { Socket as Tcp } from 'node:net'
 import { EventEmitter } from './EventEmitter'
-import { sleep } from './utils'
+import { getNestedValue, pathToPaths, setNestedValue, sleep } from './utils'
 import type { SocketOptions as UdpOptions } from 'node:dgram'
 import type { SocketConstructorOpts as TcpOptions } from 'node:net'
 
@@ -71,21 +71,47 @@ export abstract class BaseDevice extends EventEmitter {
     attributes && this.fill(attributes)
   }
 
-  public get(key: string): any | undefined {
-    return this._attributes.get(key)
+  public get(key: string, fallback?: any): any | undefined {
+    const paths = pathToPaths(key)
+    return getNestedValue(
+      this._attributes.get(paths[0]),
+      paths.slice(1),
+      fallback,
+    )
   }
 
   public has(key: string): boolean {
-    return this._attributes.has(key)
+    const paths = pathToPaths(key)
+    if (paths.length === 1) {
+      return this._attributes.has(key)
+    } else {
+      return this.get(key) !== undefined
+    }
   }
 
   public set(key: string, value: any): void {
-    this._attributes.set(key, value)
+    const paths = pathToPaths(key)
+    if (paths.length === 1) {
+      this._attributes.set(key, value)
+    } else {
+      let obj: any
+      if (this._attributes.has(paths[0])) {
+        obj = this._attributes.get(paths[0])
+      } else {
+        obj = {}
+        this._attributes.set(paths[0], obj)
+      }
+      setNestedValue(
+        obj,
+        paths.slice(1),
+        value,
+      )
+    }
   }
 
   public fill(attributes: Record<string, any>): void {
     for (const [key, value] of Object.entries(attributes)) {
-      this._attributes.set(key, value)
+      this.set(key, value)
     }
   }
 
@@ -103,7 +129,10 @@ export abstract class BaseDevice extends EventEmitter {
     },
   ): Promise<this> {
     return new Promise(resolve => {
-      const timeout = options?.timeout ?? this._options.connectionTimeout
+      const {
+        timeout = this._options.connectionTimeout,
+      } = options ?? {}
+
       const { type, encoding, tcpOptions, udpOptions } = this._options
 
       if (this._client instanceof Udp) {
